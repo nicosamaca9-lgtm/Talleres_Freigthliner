@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.Core.Security import verify_password, create_access_token, hash_password
+from app.Core.security import verify_password, create_access_token, hash_password
 from app.Repositories.UserRepository import (
     get_user_by_email,
     create_user,

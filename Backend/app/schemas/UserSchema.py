@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from app.Core.Enum import UserRole
 
 
-class UserCreate(BaseModel):
+class MechanicRegister(BaseModel):
     nombre: str
     apellido: str
     telefono: str | None = None
