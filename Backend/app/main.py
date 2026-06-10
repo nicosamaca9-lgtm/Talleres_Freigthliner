@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.Api.v1.router import api_router
-from app.Core.Config import settings
+from app.Core.config import settings
 from app.db.session import engine
 
 
