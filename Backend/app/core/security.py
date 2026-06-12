@@ -5,7 +5,7 @@ from typing import Any
 
 from jose import JWTError, jwt
 
-from app.Core.Config import settings
+from app.Core.config import settings
 
 
 import bcrypt

@@ -13,7 +13,7 @@ from sqlalchemy import pool
 from alembic import context
 
 # === DEJA ESTO IGUAL CON LAS MAYÚSCULAS DE TU COMPAÑERO ===
-from app.Core.Config import settings
+from app.Core.config import settings
 from app.db.base import Base
 
 # Importar los modelos para que Base.metadata los detecte
