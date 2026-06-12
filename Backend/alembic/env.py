@@ -1,16 +1,24 @@
+import sys
+import os
 from logging.config import fileConfig
+
+# === REEMPLAZA EL SYS.PATH ANTERIOR POR ESTA VERSIÓN ABSOLUTA ===
+# Encuentra la ruta absoluta de la carpeta 'Backend' (un nivel arriba de donde está env.py)
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if backend_path not in sys.path:
+    sys.path.insert(0, backend_path)
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
 
-# Importar la configuracion de la app y los modelos
-from app.Core.config import settings
+# === DEJA ESTO IGUAL CON LAS MAYÚSCULAS DE TU COMPAÑERO ===
+from app.Core.Config import settings
 from app.db.base import Base
 
 # Importar los modelos para que Base.metadata los detecte
 from app.Models.UserEntity import User
+from app.Models.VehicleEntity import Vehicle
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
