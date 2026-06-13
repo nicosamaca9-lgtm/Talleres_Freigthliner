@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
-from app.Core.security import hash_password
-from app.Repositories.UserRepository import (
+from app.core.security import hash_password
+from app.repositories.UserRepository import (
+    get_user_by_email,
     create_user,
     get_user_by_unique_fields,
 )
-from app.Models.UserEntity import User
-from app.Core.Enum import UserRole
-from app.Core.Exceptions import UserAlreadyExistsError
-from app.Schemas.UserSchema import MechanicRegister
+from app.models.UserEntity import User
+from app.core.Enum import UserRole
+from app.core.Exceptions import UserAlreadyExistsError
+from app.schemas.UserSchema import MechanicRegister
 
 
 def register_mechanic(db: Session, data: MechanicRegister):
@@ -15,14 +16,19 @@ def register_mechanic(db: Session, data: MechanicRegister):
     if not data.especialidad or not data.especialidad.strip():
         raise ValueError("La especialidad es obligatoria para registrar un mecánico")
 
-    existing_user = get_user_by_unique_fields(db, data.correo, data.telefono, getattr(data, "cedula", None))
+    existing_user = get_user_by_unique_fields(
+        db, data.correo, data.telefono, getattr(data, "cedula", None)
+    )
 
     if existing_user:
         if existing_user.correo == data.correo:
             raise UserAlreadyExistsError("El correo ya está registrado")
         if existing_user.telefono == data.telefono:
             raise UserAlreadyExistsError("El teléfono ya está registrado")
-        if getattr(existing_user, "cedula", None) == getattr(data, "cedula", None) and getattr(data, "cedula", None) is not None:
+        if (
+            getattr(existing_user, "cedula", None) == getattr(data, "cedula", None)
+            and getattr(data, "cedula", None) is not None
+        ):
             raise UserAlreadyExistsError("La cédula ya está registrada")
 
     user = User(

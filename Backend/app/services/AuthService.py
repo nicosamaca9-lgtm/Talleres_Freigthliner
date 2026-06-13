@@ -2,16 +2,16 @@
 
 from sqlalchemy.orm import Session
 
-from app.Core.security import verify_password, create_access_token, hash_password
-from app.Repositories.UserRepository import (
+from app.core.security import verify_password, create_access_token, hash_password
+from app.repositories.UserRepository import (
     get_user_by_email,
     create_user,
     get_user_by_unique_fields,
 )
-from app.Models.UserEntity import User
-from app.Core.Enum import UserRole
-from app.Core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
-from app.Schemas.AuthSchema import LoginRequest, ClientRegister
+from app.models.UserEntity import User
+from app.core.Enum import UserRole
+from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
+from app.schemas.AuthSchema import LoginRequest, ClientRegister
 
 
 def authenticate_user(db: Session, correo: str, password: str) -> User | None:

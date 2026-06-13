@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Enum, Bool
 from sqlalchemy.sql import func
 
 from app.db.base import Base
-from app.Core.Enum import UserRole
+from app.core.Enum import UserRole
 
 
 class User(Base):

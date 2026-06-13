@@ -5,8 +5,19 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.session import get_db  # Dependencia para obtener la sesión de la BD
-from app.Schemas.VehicleSchema import VehicleCreate, VehicleResponse
-from app.Services.VehicleService import VehicleService
+from app.schemas.VehicleSchema import VehicleCreate, VehicleResponse
+from app.services.VehicleService import VehicleService
+
+
+# Corrige esto al principio del archivo:
+from app.db.base import Base          # El Base sí viene de base
+from app.db.session import engine      # ¡El engine viene de session!
+
+from app.models.VehicleEntity import Vehicle  
+from app.models.BookingEntity import Booking
+
+# Esto creará las tablas apenas se recargue el servidor
+Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 

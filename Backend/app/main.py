@@ -4,10 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.Api.v1.router import api_router
-from app.Core.config import settings
+from app.api.v1.router import api_router
+from app.core.config import settings
 from app.db.session import engine
 
+import codecs
+# Fuerza a que los errores de decodificación reemplacen el caracter en vez de romper la app
+codecs.register_error("strict", codecs.ignore_errors)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

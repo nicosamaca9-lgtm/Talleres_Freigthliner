@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.Schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse
-from app.Schemas.UserSchema import UserResponse
-from app.Services.AuthService import register_client, login_user
+from app.schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse
+from app.schemas.UserSchema import UserResponse
+from app.services.AuthService import register_client, login_user
 
 
-from app.Core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
+from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
 from sqlalchemy.exc import IntegrityError
 
 

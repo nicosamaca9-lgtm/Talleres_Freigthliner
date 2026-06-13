@@ -3,14 +3,14 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.Schemas.UserSchema import MechanicRegister
-from app.Schemas.UserSchema import UserResponse
-from app.Services.UserService import register_mechanic as register_mechanic_service
-from app.Core.Enum import UserRole
-from app.Api.deps import require_roles
+from app.schemas.UserSchema import MechanicRegister
+from app.schemas.UserSchema import UserResponse
+from app.services.UserService import register_mechanic as register_mechanic_service
+from app.core.Enum import UserRole
+from app.api.deps import require_roles
 
 
-from app.Core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
+from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
 
 
 router = APIRouter()
