@@ -20,11 +20,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TF Centro Automotriz',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      routerConfig: appRouter,
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        return MaterialApp.router(
+          title: 'TF Centro Automotriz',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.darkTheme,
+          routerConfig: createAppRouter(authProvider),
+        );
+      },
     );
   }
 }
