@@ -13,12 +13,12 @@ from sqlalchemy import pool
 from alembic import context
 
 # === DEJA ESTO IGUAL CON LAS MAYÚSCULAS DE TU COMPAÑERO ===
-from app.Core.config import settings
+from app.core.config import settings
 from app.db.base import Base
 
 # Importar los modelos para que Base.metadata los detecte
-from app.Models.UserEntity import User
-from app.Models.VehicleEntity import Vehicle
+from app.models.UserEntity import User
+from app.models.VehicleEntity import Vehicle
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

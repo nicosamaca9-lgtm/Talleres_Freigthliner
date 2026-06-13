@@ -23,8 +23,6 @@ class Vehicle(Base):
     # Usamos el Enum estricto de Nicolás
     tipo_vehiculo = Column(SQLEnum(TipoVehiculoEnum), nullable=False)
     
-    # Mantener el kilometraje (¡ojo!, a Nicolás se le había borrado en su cambio)
-    kilometraje_actual = Column(Integer, nullable=False, default=0)
 
     # 2. Conservamos tu relación para los agendamientos
     bookings = relationship("Booking", back_populates="vehicle")

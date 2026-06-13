@@ -1,33 +1,29 @@
-# app/Api/VehicleEndpoint.py
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.db.session import get_db  # Dependencia para obtener la sesión de la BD
-from app.schemas.VehicleSchema import VehicleCreate, VehicleResponse
+from app.db.session import get_db
+from app.schemas.VehicleSchema import VehicleCreate, VehicleResponse, MyVehicleResponse
+from app.schemas.InvitationSchema import InvitationCreateResponse, InvitationRedeemRequest, InvitationRedeemResponse
 from app.services.VehicleService import VehicleService
-
+from app.api.v1.deps import get_current_user
+from app.models.UserEntity import User
 
 # Corrige esto al principio del archivo:
-from app.db.base import Base          # El Base sí viene de base
-from app.db.session import engine      # ¡El engine viene de session!
+from app.db.base import Base
+from app.db.session import engine
 
-from app.models.VehicleEntity import Vehicle  
-from app.models.BookingEntity import Booking
-
-# Esto creará las tablas apenas se recargue el servidor
+# Esto creará las tablas apenas se recargue el servidor si no existen
 Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
 @router.post("/", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
-def register_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db)):
+def register_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Endpoint para registrar un nuevo vehículo.
-    Valida que la placa no esté duplicada antes de guardarlo.
+    El usuario logueado quedará automáticamente asignado como el Propietario.
     """
-    # 1. Verificar si el vehículo ya existe por placa
     db_vehicle = VehicleService.get_vehicle_by_placa(db, placa=vehicle.placa)
     if db_vehicle:
         raise HTTPException(
@@ -35,8 +31,32 @@ def register_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db)):
             detail="Ya existe un vehículo registrado con esta placa."
         )
     
-    # 2. Si no existe, lo creamos a través del servicio
-    return VehicleService.create_vehicle(db=db, vehicle_data=vehicle)
+    return VehicleService.create_vehicle(db=db, vehicle_data=vehicle, user_id=current_user.id_usuario)
+
+
+@router.post("/{placa}/invitations", response_model=InvitationCreateResponse)
+def create_invitation(placa: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Genera un código aleatorio para invitar a un conductor al vehículo.
+    Solo el propietario del vehículo puede ejecutar esto.
+    """
+    return VehicleService.generate_invitation(db=db, placa=placa, user_id=current_user.id_usuario)
+
+
+@router.post("/invitations/redeem", response_model=InvitationRedeemResponse)
+def redeem_invitation(data: InvitationRedeemRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Permite a un usuario (Conductor) unirse a un vehículo ingresando el código secreto de 6 dígitos.
+    """
+    return VehicleService.redeem_invitation(db=db, codigo_secreto=data.codigo_secreto, user_id=current_user.id_usuario)
+
+
+@router.get("/mine", response_model=List[MyVehicleResponse])
+def my_vehicles(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Retorna los vehículos del usuario logueado con su rol (Propietario o Conductor).
+    """
+    return VehicleService.get_my_vehicles(db=db, user_id=current_user.id_usuario)
 
 
 @router.get("/", response_model=List[VehicleResponse])
