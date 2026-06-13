@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.Models.UserEntity import User
+from app.models.UserEntity import User
 
 
 def get_user_by_email(db: Session, correo: str) -> User | None:

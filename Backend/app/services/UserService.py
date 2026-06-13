@@ -1,14 +1,14 @@
 from sqlalchemy.orm import Session
-from app.Core.security import hash_password
-from app.Repositories.UserRepository import (
+from app.core.security import hash_password
+from app.repositories.UserRepository import (
     get_user_by_email,
     create_user,
     get_user_by_email_or_phone,
 )
-from app.Models.UserEntity import User
-from app.Core.Enum import UserRole
-from app.Core.Exceptions import UserAlreadyExistsError
-from app.Schemas.UserSchema import MechanicRegister
+from app.models.UserEntity import User
+from app.core.Enum import UserRole
+from app.core.Exceptions import UserAlreadyExistsError
+from app.schemas.UserSchema import MechanicRegister
 
 
 def register_mechanic(db: Session, data: MechanicRegister):

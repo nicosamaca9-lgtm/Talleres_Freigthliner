@@ -1,8 +1,8 @@
 # app/Services/VehicleService.py
 
 from sqlalchemy.orm import Session
-from app.Models.VehicleEntity import Vehicle
-from app.Schemas.VehicleSchema import VehicleCreate
+from app.models.VehicleEntity import Vehicle
+from app.schemas.VehicleSchema import VehicleCreate
 
 class VehicleService:
 

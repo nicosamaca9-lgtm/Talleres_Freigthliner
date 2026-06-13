@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict
-from app.Core.Enum import UserRole
+from app.core.Enum import UserRole
 
 
 class MechanicRegister(BaseModel):
