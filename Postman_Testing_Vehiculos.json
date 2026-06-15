@@ -1,0 +1,122 @@
+{
+    "info": {
+        "name": "TF Centro Automotriz - Flujo Vehiculos",
+        "description": "Pruebas del módulo de Dueños, Vehículos y Conductores",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {"key": "base_url", "value": "http://localhost:8000/api/v1", "type": "string"},
+        {"key": "token_propietario", "value": "", "type": "string"},
+        {"key": "token_conductor", "value": "", "type": "string"},
+        {"key": "codigo_invitacion", "value": "", "type": "string"}
+    ],
+    "item": [
+        {
+            "name": "1. Registrar Dueño",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"]},
+                "body": {"mode": "raw", "raw": "{\"nombre\": \"Dueño\", \"apellido\": \"Test\", \"correo\": \"owner@test.com\", \"password\": \"password123\", \"telefono\": \"3000000001\", \"cedula\": \"1000000001\"}"}
+            }
+        },
+        {
+            "name": "2. Login Dueño",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"token_propietario\", jsonData.access_token);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]},
+                "body": {"mode": "raw", "raw": "{\"correo\": \"owner@test.com\", \"password\": \"password123\"}"}
+            }
+        },
+        {
+            "name": "3. Crear Vehículo (Como Dueño)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {"key": "Content-Type", "value": "application/json"},
+                    {"key": "Authorization", "value": "Bearer {{token_propietario}}"}
+                ],
+                "url": {"raw": "{{base_url}}/vehicles/", "host": ["{{base_url}}"], "path": ["vehicles", ""]},
+                "body": {"mode": "raw", "raw": "{\"placa\": \"XYZ123\", \"marca\": \"Volvo\", \"modelo\": \"FH16\", \"tipo_vehiculo\": \"Tractomula\"}"}
+            }
+        },
+        {
+            "name": "4. Generar Invitación (Como Dueño)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"codigo_invitacion\", jsonData.codigo_secreto);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {"key": "Content-Type", "value": "application/json"},
+                    {"key": "Authorization", "value": "Bearer {{token_propietario}}"}
+                ],
+                "url": {"raw": "{{base_url}}/vehicles/XYZ123/invitations", "host": ["{{base_url}}"], "path": ["vehicles", "XYZ123", "invitations"]}
+            }
+        },
+        {
+            "name": "5. Registrar Conductor",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"]},
+                "body": {"mode": "raw", "raw": "{\"nombre\": \"Conductor\", \"apellido\": \"Test\", \"correo\": \"driver@test.com\", \"password\": \"password123\", \"telefono\": \"3000000002\", \"cedula\": \"1000000002\"}"}
+            }
+        },
+        {
+            "name": "6. Login Conductor",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"token_conductor\", jsonData.access_token);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]},
+                "body": {"mode": "raw", "raw": "{\"correo\": \"driver@test.com\", \"password\": \"password123\"}"}
+            }
+        },
+        {
+            "name": "7. Canjear Invitación (Como Conductor)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {"key": "Content-Type", "value": "application/json"},
+                    {"key": "Authorization", "value": "Bearer {{token_conductor}}"}
+                ],
+                "url": {"raw": "{{base_url}}/vehicles/invitations/redeem", "host": ["{{base_url}}"], "path": ["vehicles", "invitations", "redeem"]},
+                "body": {"mode": "raw", "raw": "{\"codigo_secreto\": \"{{codigo_invitacion}}\"}"}
+            }
+        }
+    ]
+}

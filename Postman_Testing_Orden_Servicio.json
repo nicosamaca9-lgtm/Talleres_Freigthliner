@@ -1,0 +1,69 @@
+{
+    "info": {
+        "name": "TF Centro Automotriz - Ordenes de Servicio",
+        "description": "Pruebas del módulo de Órdenes de Servicio",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {"key": "base_url", "value": "http://localhost:8000/api/v1", "type": "string"},
+        {"key": "id_orden", "value": "", "type": "string"}
+    ],
+    "item": [
+        {
+            "name": "1. Crear Orden de Servicio (Admin/Recepción)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"id_orden\", jsonData.id_orden);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/service-orders/", "host": ["{{base_url}}"], "path": ["service-orders", ""]},
+                "body": {
+                    "mode": "raw", 
+                    "raw": "{\n  \"id_vehiculo\": 1,\n  \"fecha_ingreso\": \"2026-06-15\",\n  \"hora_ingreso\": \"08:00:00\",\n  \"cliente_nombre\": \"Empresa Transportes SA\",\n  \"cliente_identificacion\": \"900123456\",\n  \"cliente_telefono\": \"3110000000\",\n  \"conductor_nombre\": \"Juan Perez\",\n  \"conductor_telefono\": \"3220000000\",\n  \"kilometraje_ingreso\": 150000,\n  \"nivel_combustible\": \"Medio\",\n  \"trabajos_a_realizar\": \"Revisión de frenos y cambio de aceite\"\n}"
+                }
+            }
+        },
+        {
+            "name": "2. Actualizar Estado a En Reparación",
+            "request": {
+                "method": "PATCH",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/service-orders/{{id_orden}}", "host": ["{{base_url}}"], "path": ["service-orders", "{{id_orden}}"]},
+                "body": {
+                    "mode": "raw", 
+                    "raw": "{\n  \"estado_orden\": \"EN_REPARACION\",\n  \"informe_trabajo\": \"Se cambiaron las pastillas de freno y aceite de motor 15W40\"\n}"
+                }
+            }
+        },
+        {
+            "name": "3. Consultar Estado en Dashboard (Cliente)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {"raw": "{{base_url}}/service-orders/vehicle/XYZ123", "host": ["{{base_url}}"], "path": ["service-orders", "vehicle", "XYZ123"]}
+            }
+        },
+        {
+            "name": "4. Finalizar Orden (Entregado)",
+            "request": {
+                "method": "PATCH",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/service-orders/{{id_orden}}", "host": ["{{base_url}}"], "path": ["service-orders", "{{id_orden}}"]},
+                "body": {
+                    "mode": "raw", 
+                    "raw": "{\n  \"estado_orden\": \"ENTREGADO\"\n}"
+                }
+            }
+        }
+    ]
+}

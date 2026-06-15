@@ -2,3 +2,5 @@ from app.models.UserEntity import User
 from app.models.VehicleEntity import Vehicle
 from app.models.VehicleUserEntity import VehicleUser
 from app.models.VehicleInvitationEntity import VehicleInvitation
+from app.models.BookingEntity import Booking
+from app.models.ServiceOrderEntity import ServiceOrder
