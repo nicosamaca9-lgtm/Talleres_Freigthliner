@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+
+import '../../../models/booking_model.dart';
+import '../../../repositories/booking_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/ui_components.dart';
 
@@ -87,23 +90,60 @@ class _AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bookingRepo = BookingRepository();
+
     return DashboardCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CardTitle(
-            icon: Icons.event_available_rounded,
-            title: 'Proxima cita',
-          ),
-          const SizedBox(height: 18),
-          const InfoLine(label: 'Fecha', value: 'Viernes 14 Jun - 9:30 AM'),
-          const SizedBox(height: 12),
-          const InfoLine(label: 'Vehiculo', value: 'Toyota Corolla 2020'),
-          const SizedBox(height: 12),
-          const InfoLine(label: 'Servicio', value: 'Revision preventiva'),
-          const SizedBox(height: 18),
-          const StatusChip(text: 'Confirmada', color: AppTheme.green),
-        ],
+      child: FutureBuilder<BookingModel?>(
+        future: bookingRepo.getLatestBooking(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(color: AppTheme.green),
+              ),
+            );
+          }
+
+          final booking = snapshot.data;
+
+          if (booking == null) {
+            return const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardTitle(
+                  icon: Icons.event_available_rounded,
+                  title: 'Proxima cita',
+                ),
+                SizedBox(height: 18),
+                Text('No tienes citas agendadas.', style: TextStyle(color: Colors.white70)),
+              ],
+            );
+          }
+
+          // Mapeo dinámico de colores de estado según tu backend
+          Color statusColor = AppTheme.amber;
+          if (booking.estadoConfirmacion == 'CONFIRMADO') statusColor = AppTheme.green;
+          if (booking.estadoConfirmacion == 'CANCELADO') statusColor = Colors.redAccent;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CardTitle(
+                icon: Icons.event_available_rounded,
+                title: 'Proxima cita',
+              ),
+              const SizedBox(height: 18),
+              InfoLine(label: 'Fecha', value: '${booking.fechaCita} - ${booking.horaCita}'),
+              const SizedBox(height: 12),
+              InfoLine(label: 'Vehiculo ID', value: 'ID: ${booking.idVehiculo}'), 
+              const SizedBox(height: 12),
+              InfoLine(label: 'Detalles', value: booking.observaciones ?? 'Sin observaciones'),
+              const SizedBox(height: 18),
+              StatusChip(text: booking.estadoConfirmacion, color: statusColor),
+            ],
+          );
+        },
       ),
     );
   }
