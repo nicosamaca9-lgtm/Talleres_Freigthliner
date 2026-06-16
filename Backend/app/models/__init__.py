@@ -4,3 +4,4 @@ from app.models.VehicleUserEntity import VehicleUser
 from app.models.VehicleInvitationEntity import VehicleInvitation
 from app.models.BookingEntity import Booking
 from app.models.ServiceOrderEntity import ServiceOrder
+from app.models.TechnicalReportEntity import TechnicalReport

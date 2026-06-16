@@ -2,7 +2,7 @@ import sys
 import os
 from logging.config import fileConfig
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # === REEMPLAZA EL SYS.PATH ANTERIOR POR ESTA VERSIÓN ABSOLUTA ===
 # Encuentra la ruta absoluta de la carpeta 'Backend' (un nivel arriba de donde está env.py)
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -18,8 +18,7 @@ from app.core.config import settings
 from app.db.base import Base
 
 # Importar los modelos para que Base.metadata los detecte
-from app.models.UserEntity import User
-from app.models.VehicleEntity import Vehicle
+import app.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -75,9 +74,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
