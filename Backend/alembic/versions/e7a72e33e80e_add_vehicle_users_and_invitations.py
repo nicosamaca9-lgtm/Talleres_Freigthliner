@@ -44,9 +44,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_vehiculos_usuarios_id'), 'vehiculos_usuarios', ['id'], unique=False)
-    op.drop_index(op.f('ix_vehicles_id_vehiculo'), table_name='vehicles')
-    op.drop_index(op.f('ix_vehicles_placa'), table_name='vehicles')
-    op.drop_table('vehicles')
+    
+    # PROTECCIÓN CONTRA BORRADOS FANTASMAS:
+    op.drop_index(op.f('ix_vehicles_id_vehiculo'), table_name='vehicles', if_exists=True)
+    op.drop_index(op.f('ix_vehicles_placa'), table_name='vehicles', if_exists=True)
+    # op.drop_table('vehicles') # <-- COMENTADO PORQUE LA TABLA NO EXISTE LOCALMENTE
+    
     op.execute("UPDATE usuarios SET cedula = 'TMP_' || id_usuario::text WHERE cedula IS NULL")
     op.alter_column('usuarios', 'cedula',
                existing_type=sa.VARCHAR(length=20),
