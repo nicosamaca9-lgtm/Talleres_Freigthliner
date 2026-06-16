@@ -2,6 +2,7 @@ import sys
 import os
 from logging.config import fileConfig
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # === REEMPLAZA EL SYS.PATH ANTERIOR POR ESTA VERSIÓN ABSOLUTA ===
 # Encuentra la ruta absoluta de la carpeta 'Backend' (un nivel arriba de donde está env.py)
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
