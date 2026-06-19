@@ -47,6 +47,31 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
         currentIndex: _currentIndex,
         onChanged: (index) => setState(() => _currentIndex = index),
       ),
+      
+      floatingActionButton: _currentIndex == 1
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VehiculosScreen(), // <-- Tu pantalla real
+                  ),
+                );
+              },
+              label: Text(
+                'Agregar Vehículo',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF050607),
+                ),
+              ),
+              icon: const Icon(
+                Icons.add_rounded,
+                color: Color(0xFF050607),
+              ),
+              backgroundColor: AppTheme.green,
+            )
+          : null, 
     );
   }
 }
