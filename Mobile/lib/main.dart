@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 import 'providers/auth_provider.dart';
+import 'providers/vehicle_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => VehicleProvider()),
       ],
       child: const MyApp(),
     ),
