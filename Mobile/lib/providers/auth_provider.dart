@@ -11,6 +11,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _role;
   String? _token;
+  int? _userId;
 
   AuthProvider() {
     _loadSession();
@@ -20,6 +21,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isInitialized => _isInitialized;
   String? get errorMessage => _errorMessage;
   String? get role => _role;
+  int? get userId => _userId;
   bool get isAuthenticated => _token != null;
   bool get isClient => _role == 'client' || _role == 'cliente';
 
@@ -27,6 +29,7 @@ class AuthProvider extends ChangeNotifier {
     _token = await SecureStorage.getToken();
     if (_token != null) {
       _role = _extractRoleFromToken(_token!);
+      _userId = _extractUserIdFromToken(_token!);
     }
     _isInitialized = true;
     notifyListeners();
@@ -41,6 +44,7 @@ class AuthProvider extends ChangeNotifier {
       await SecureStorage.saveToken(response.accessToken);
       _token = response.accessToken;
       _role = _extractRoleFromToken(response.accessToken);
+      _userId = _extractUserIdFromToken(response.accessToken);
       _setLoading(false);
       return true;
     } catch (e) {
@@ -111,6 +115,25 @@ class AuthProvider extends ChangeNotifier {
       return null;
     }
 
+    return null;
+  }
+
+  int? _extractUserIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final data = jsonDecode(payload);
+
+      if (data is Map<String, dynamic>) {
+        return int.tryParse(data['sub']?.toString() ?? '');
+      }
+    } catch (_) {
+      return null;
+    }
     return null;
   }
 }
