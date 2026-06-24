@@ -7,6 +7,7 @@ import '../client/widgets/agendamiento_cliente.dart';
 import '../client/widgets/comentarios_cliente.dart';
 import '../client/widgets/vehiculo_cliente.dart';
 
+
 class ClientDashboardScreen extends StatefulWidget {
   const ClientDashboardScreen({super.key});
 
@@ -20,7 +21,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const ScheduleTab(),
+      const AgendamientoCliente(),
       const VehiclesTab(),
       const CommentsTab(),
     ];

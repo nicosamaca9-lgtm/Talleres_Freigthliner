@@ -7,7 +7,7 @@ import '../../../repositories/booking_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/ui_components.dart';
 
-class ScheduleTab extends StatelessWidget {
+class AgendamientoCliente extends StatelessWidget {
   const ScheduleTab({super.key});
 
   @override

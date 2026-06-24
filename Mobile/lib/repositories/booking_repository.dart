@@ -1,25 +1,24 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import '../core/network/api_client.dart';
 import '../models/booking_model.dart';
 
 class BookingRepository {
-  // Nota: Usa '10.0.2.2' si estás en emulador Android, o tu IP local si pruebas en físico
-  final String _baseUrl = 'http://10.0.2.2:8000/api/v1';
-
   Future<BookingModel?> getLatestBooking() async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/bookings/'));
+      final response = await apiClient.get('/bookings/');
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = response.data;
         if (data.isNotEmpty) {
           // Tomamos el último agendamiento registrado
           return BookingModel.fromJson(data.last);
         }
       }
       return null;
+    } on DioException catch (e) {
+      // Idealmente enviar a un log, pero en app móvil evitamos prints en prod
+      return null;
     } catch (e) {
-      print("Error en BookingRepository: $e");
       return null;
     }
   }
