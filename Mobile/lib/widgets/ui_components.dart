@@ -224,11 +224,13 @@ class ActionButton extends StatelessWidget {
     required this.icon,
     this.isPrimary = false,
     this.isDanger = false,
+    this.onPressed,
   });
   final String label;
   final IconData icon;
   final bool isPrimary;
   final bool isDanger;
+  final VoidCallback? onPressed;
   @override
   Widget build(BuildContext context) {
     final background = isPrimary
@@ -247,7 +249,7 @@ class ActionButton extends StatelessWidget {
         ? AppTheme.red.withValues(alpha: 0.55)
         : const Color(0xFF2A2A2A);
     return ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: onPressed ?? () {},
       icon: Icon(icon, size: 17),
       label: Text(label),
       style: ElevatedButton.styleFrom(

@@ -6,7 +6,7 @@ class BookingRepository {
   Future<BookingModel?> getLatestBooking() async {
     try {
       final response = await apiClient.get('/bookings/');
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         if (data.isNotEmpty) {
@@ -15,7 +15,7 @@ class BookingRepository {
         }
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       // Idealmente enviar a un log, pero en app móvil evitamos prints en prod
       return null;
     } catch (e) {

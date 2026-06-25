@@ -4,6 +4,7 @@ from app.api.v1.endpoints import (
     AdminEndpoint,
     VehicleEndpoint,
     TechnicalReportEndpoint,
+    CommentEndpoint,
 )
 from app.api.v1.endpoints.BookingEndpoint import router as booking_router
 from app.api.v1.endpoints.ServiceOrderEndpoint import router as service_order_router
@@ -22,3 +23,4 @@ api_router.include_router(
     prefix="/technical-reports",
     tags=["Technical Reports"],
 )
+api_router.include_router(CommentEndpoint.router, prefix="/comments", tags=["Comments"])
