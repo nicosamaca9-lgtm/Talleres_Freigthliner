@@ -6,6 +6,8 @@ import 'providers/auth_provider.dart';
 import 'providers/vehicle_provider.dart';
 import 'providers/comment_provider.dart';
 import 'providers/booking_provider.dart';
+import 'providers/admin_provider.dart';
+import 'providers/mechanic_provider.dart';
 
 void main() {
   runApp(
@@ -15,6 +17,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
         ChangeNotifierProvider(create: (_) => CommentProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => MechanicProvider()),
       ],
       child: const MyApp(),
     ),

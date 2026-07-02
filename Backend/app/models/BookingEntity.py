@@ -7,7 +7,10 @@ from app.db.base import Base
 class ConfirmationState(str, enum.Enum):
     PENDIENTE = "PENDIENTE"
     CONFIRMADO = "CONFIRMADO"
+    RECHAZADO = "RECHAZADO"
     CANCELADO = "CANCELADO"
+    EN_TALLER = "EN_TALLER"
+    CANCELADO_POR_SISTEMA = "CANCELADO_POR_SISTEMA"
 
 class Booking(Base):
     __tablename__ = "agendamientos"
@@ -24,6 +27,7 @@ class Booking(Base):
     hora_cita = Column(Time, nullable=False)
     observaciones = Column(String(255), nullable=True)
     estado_confirmacion = Column(Enum(ConfirmationState), default=ConfirmationState.PENDIENTE, nullable=False)
+    motivo_rechazo = Column(String(255), nullable=True)
 
     # Relación orientada a objetos con la clase de tu compañero
     vehicle = relationship("Vehicle", back_populates="bookings")

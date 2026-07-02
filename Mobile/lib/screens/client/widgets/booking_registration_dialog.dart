@@ -28,7 +28,10 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<VehicleProvider>().loadMyVehicles();
+      final userId = context.read<AuthProvider>().userId;
+      if (userId != null) {
+        context.read<VehicleProvider>().loadMyVehicles(userId);
+      }
     });
   }
 

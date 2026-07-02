@@ -25,5 +25,11 @@ class TechnicalReportResponse(BaseModel):
     diagnostico: str
     recomendaciones: str
     repuestos_usados: str | None
+    estado_revision: str
+    observaciones_admin: str | None
+
+class TechnicalReportReview(BaseModel):
+    estado_revision: str
+    observaciones_admin: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

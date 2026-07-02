@@ -57,11 +57,21 @@ class BookingService:
 
     @staticmethod
     def get_bookings_by_user(db: Session, id_usuario: int):
-        """Busca todos los agendamientos activos de un usuario"""
-        return db.query(Booking).filter(
-            Booking.id_usuario == id_usuario,
-            Booking.estado_confirmacion != ConfirmationState.CANCELADO
-        ).all()
+        """Busca todos los agendamientos activos de un usuario y cancela los vencidos"""
+        from datetime import datetime
+        bookings = db.query(Booking).filter(Booking.id_usuario == id_usuario).order_by(Booking.fecha_cita.desc(), Booking.hora_cita.desc()).all()
+        now = datetime.now()
+        
+        for b in bookings:
+            if b.estado_confirmacion in [ConfirmationState.PENDIENTE, ConfirmationState.CONFIRMADO]:
+                is_past_date = b.fecha_cita < now.date()
+                is_past_time_today = b.fecha_cita == now.date() and now.hour >= 18
+                if is_past_date or is_past_time_today:
+                    b.estado_confirmacion = ConfirmationState.CANCELADO_POR_SISTEMA
+                    b.motivo_rechazo = "Cancelada automáticamente por el sistema al no registrar ingreso al taller."
+                    db.commit()
+                    
+        return bookings
 
     @staticmethod
     def update_booking(db: Session, id_agendamiento: int, booking_data: BookingUpdate):

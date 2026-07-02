@@ -13,6 +13,7 @@ class ServiceOrder(Base):
     __tablename__ = "ordenes_servicio"
 
     id_orden = Column(Integer, primary_key=True, index=True)
+    numero_orden = Column(String(20), unique=True, index=True, nullable=False)
     id_vehiculo = Column(Integer, ForeignKey("vehiculos.id_vehiculo", ondelete="RESTRICT"), nullable=False)
     id_mecanico = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), nullable=True)
     id_agendamiento = Column(Integer, ForeignKey("agendamientos.id_agendamiento", ondelete="SET NULL"), nullable=True)

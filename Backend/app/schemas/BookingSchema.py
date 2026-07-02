@@ -19,9 +19,13 @@ class BookingUpdate(BaseModel):
     hora_cita: time = Field(..., description="Nueva hora programada para la cita (HH:MM:SS)")
     observaciones: Optional[str] = Field(None, max_length=255, description="Nuevas notas o fallas reportadas")
 
+class BookingReject(BaseModel):
+    motivo_rechazo: str = Field(..., min_length=1, max_length=255, description="Motivo por el cual se rechaza la cita")
+
 class BookingResponse(BookingBase):
     id_agendamiento: int
     estado_confirmacion: ConfirmationState
+    motivo_rechazo: Optional[str] = None
 
     class Config:
         from_attributes = True

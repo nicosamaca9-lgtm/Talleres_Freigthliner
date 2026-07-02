@@ -6,20 +6,23 @@ class VehicleProvider extends ChangeNotifier {
   final VehicleRepository _repository = VehicleRepository();
   
   List<VehicleModel> _vehicles = [];
+  List<dynamic> _activeServiceOrders = [];
   bool _isLoading = false;
   String? _error;
 
   List<VehicleModel> get vehicles => _vehicles;
+  List<dynamic> get activeServiceOrders => _activeServiceOrders;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  Future<void> loadMyVehicles() async {
+  Future<void> loadMyVehicles(int userId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       _vehicles = await _repository.getMyVehicles();
+      _activeServiceOrders = await _repository.getActiveServiceOrders(userId);
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -63,7 +66,7 @@ class VehicleProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> redeemInvitation(String codigoSecreto) async {
+  Future<void> redeemInvitation(String codigoSecreto, int userId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -71,7 +74,7 @@ class VehicleProvider extends ChangeNotifier {
     try {
       await _repository.redeemInvitation(codigoSecreto);
       // Reload vehicles because a new one was added to the list
-      await loadMyVehicles();
+      await loadMyVehicles(userId);
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');
       throw Exception(_error);

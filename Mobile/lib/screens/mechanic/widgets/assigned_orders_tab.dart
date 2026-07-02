@@ -1,63 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/ui_components.dart';
+import '../../../providers/mechanic_provider.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../models/service_order_model.dart';
 
-class AssignedOrdersTab extends StatelessWidget {
+class AssignedOrdersTab extends StatefulWidget {
   const AssignedOrdersTab({super.key});
 
   @override
+  State<AssignedOrdersTab> createState() => _AssignedOrdersTabState();
+}
+
+class _AssignedOrdersTabState extends State<AssignedOrdersTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mechanicId = context.read<AuthProvider>().userId;
+      if (mechanicId != null) {
+        context.read<MechanicProvider>().loadAssignedOrders(mechanicId);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.build_circle_rounded, color: AppTheme.green, size: 21),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Órdenes Asignadas',
-                    style: GoogleFonts.rajdhani(
-                      color: AppTheme.text,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+    return Consumer<MechanicProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.assignedOrders.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            final mechanicId = context.read<AuthProvider>().userId;
+            if (mechanicId != null) {
+              await provider.loadAssignedOrders(mechanicId);
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1280),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.build_circle_rounded, color: AppTheme.green, size: 21),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Órdenes Asignadas',
+                          style: GoogleFonts.rajdhani(
+                            color: AppTheme.text,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    if (provider.assignedOrders.isEmpty)
+                      const Text('No tienes órdenes asignadas actualmente.', style: TextStyle(color: Colors.white70))
+                    else
+                      ...provider.assignedOrders.map((order) => _AssignedOrderCard(order: order)),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              
-              // Aquí usarías ListView.builder para mostrar varias órdenes.
-              // Simularemos 2 órdenes para mostrar el formato de lista.
-              ...List.generate(2, (index) {
-                return _AssignedOrderCard(
-                  vehicle: index == 0 ? 'Toyota Hilux 2022' : 'Chevrolet Dmax 2020',
-                  plate: index == 0 ? 'ABC-123' : 'XYZ-987',
-                );
-              }),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
 class _AssignedOrderCard extends StatelessWidget {
-  const _AssignedOrderCard({
-    required this.vehicle,
-    required this.plate,
-  });
+  const _AssignedOrderCard({required this.order});
 
-  final String vehicle;
-  final String plate;
+  final ServiceOrderModel order;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +120,7 @@ class _AssignedOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      vehicle,
+                      order.numeroOrden.isNotEmpty ? order.numeroOrden : 'ORD-${order.idOrden}',
                       style: GoogleFonts.rajdhani(
                         color: AppTheme.text,
                         fontSize: 18,
@@ -101,7 +128,7 @@ class _AssignedOrderCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Placa: $plate',
+                      'Vehículo ID: ${order.idVehiculo}',
                       style: GoogleFonts.dmSans(
                         color: AppTheme.textMuted,
                         fontSize: 13,
@@ -111,9 +138,8 @@ class _AssignedOrderCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Envolvemos el StatusChip en un Flexible o simplemente no forzamos su tamaño
-              const StatusChip(
-                text: 'EN DIAGNÓSTICO',
+              StatusChip(
+                text: order.estadoOrden,
                 color: AppTheme.green,
               ),
             ],
@@ -130,7 +156,7 @@ class _AssignedOrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Trabajos a realizar:',
+                  'Diagnóstico o Trabajos a Realizar:',
                   style: GoogleFonts.dmSans(
                     color: AppTheme.textDim,
                     fontSize: 12,
@@ -139,7 +165,7 @@ class _AssignedOrderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '• Revisión de frenos delanteros\n• Cambio de aceite y filtros\n• Chequeo de suspensión',
+                  order.trabajosARealizar,
                   style: GoogleFonts.dmSans(
                     color: AppTheme.text,
                     fontSize: 14,
@@ -150,26 +176,22 @@ class _AssignedOrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const InfoLine(label: 'Cliente:', value: 'Carlos Mendoza'),
+          InfoLine(label: 'Cliente:', value: order.clienteNombre),
           const SizedBox(height: 8),
-          const InfoLine(label: 'Ingreso:', value: 'Hoy, 08:30 AM'),
+          InfoLine(label: 'Ingreso:', value: '${order.fechaIngreso} ${order.horaIngreso}'),
           const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: ActionButton(
-                  label: 'Agregar Nota',
+                  label: 'Redactar Informe',
                   icon: Icons.note_add_rounded,
-                  onPressed: () {},
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ActionButton(
-                  label: 'Actualizar',
-                  icon: Icons.update_rounded,
                   isPrimary: true,
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Función en construcción')),
+                    );
+                  },
                 ),
               ),
             ],

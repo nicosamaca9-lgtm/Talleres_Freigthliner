@@ -174,9 +174,7 @@ class _HeaderAvatar extends StatelessWidget {
         } else if (value == 'profile') {
           context.push('/profile');
         } else if (value == 'privacy') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Políticas y Privacidad próximamente...')),
-          );
+          context.push('/privacy');
         }
       },
       itemBuilder: (context) => [

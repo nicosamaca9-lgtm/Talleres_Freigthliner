@@ -168,7 +168,8 @@ class _MyBookingsList extends StatelessWidget {
           );
         }
 
-        final bookings = provider.myBookings;
+        final allBookings = provider.myBookings;
+        final bookings = allBookings.where((b) => b.estadoConfirmacion != 'EN_TALLER' && b.estadoConfirmacion != 'CANCELADO_POR_SISTEMA').toList();
 
         if (bookings.isEmpty) {
           return DashboardCard(
@@ -216,6 +217,7 @@ class _BookingTile extends StatelessWidget {
       case 'CONFIRMADO':
         return AppTheme.green;
       case 'CANCELADO':
+      case 'RECHAZADO':
         return Colors.redAccent;
       default:
         return AppTheme.amber;
@@ -406,6 +408,40 @@ class _BookingTile extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (booking.motivoRechazo != null && booking.motivoRechazo!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Motivo de rechazo:',
+                          style: GoogleFonts.dmSans(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          booking.motivoRechazo!,
+                          style: GoogleFonts.dmSans(color: Colors.white, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           const SizedBox(height: 14),

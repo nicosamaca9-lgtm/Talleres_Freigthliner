@@ -29,7 +29,7 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
   void initState() {
     super.initState();
     try {
-      _selectedDate = DateTime.parse(widget.booking.fechaCita);
+      _selectedDate = widget.booking.fechaCita;
       final parts = widget.booking.horaCita.split(':');
       _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
     } catch (e) {

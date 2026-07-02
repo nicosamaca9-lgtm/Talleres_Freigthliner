@@ -13,3 +13,7 @@ class TechnicalReport(Base):
     diagnostico = Column(String(500), nullable=False)
     recomendaciones = Column(String(1500), nullable=True)
     repuestos_usados = Column(String(1000), nullable=True)
+    
+    # Campos de revisión del administrador
+    estado_revision = Column(String(50), default="PENDIENTE", nullable=False)
+    observaciones_admin = Column(String(1000), nullable=True)

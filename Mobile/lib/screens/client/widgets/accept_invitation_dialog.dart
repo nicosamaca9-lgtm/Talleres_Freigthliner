@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../providers/vehicle_provider.dart';
+import '../../../../providers/auth_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class AcceptInvitationDialog extends StatefulWidget {
@@ -25,9 +26,12 @@ class _AcceptInvitationDialogState extends State<AcceptInvitationDialog> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final provider = Provider.of<VehicleProvider>(context, listen: false);
+      final userId = context.read<AuthProvider>().userId;
       
       try {
-        await provider.redeemInvitation(_codeController.text.trim());
+        if (userId != null) {
+          await provider.redeemInvitation(_codeController.text.trim(), userId);
+        }
         if (mounted) {
           Navigator.of(context).pop(true);
         }

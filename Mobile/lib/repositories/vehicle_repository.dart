@@ -18,6 +18,18 @@ class VehicleRepository {
     }
   }
 
+  Future<List<dynamic>> getActiveServiceOrders(int userId) async {
+    try {
+      final response = await apiClient.get('/service-orders/client/$userId/active');
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<VehicleModel> registerVehicle(Map<String, dynamic> data) async {
     try {
       final response = await apiClient.post('/vehicles/', data: data);

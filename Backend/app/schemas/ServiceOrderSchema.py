@@ -4,6 +4,7 @@ from typing import Optional
 from app.models.ServiceOrderEntity import ServiceOrderState
 
 class ServiceOrderBase(BaseModel):
+    numero_orden: Optional[str] = Field(None, description="Consecutivo automático, opcional al crear")
     id_vehiculo: int = Field(..., description="ID del vehículo")
     id_mecanico: Optional[int] = Field(None, description="ID del mecánico asignado (puede ser asignado después)")
     id_agendamiento: Optional[int] = Field(None, description="ID del agendamiento si aplica")

@@ -22,6 +22,10 @@ class AppTheme {
   static const Color red = Color(0xFFef4444);
   static const Color blue = Color(0xFF3b82f6);
 
+  static const Color primaryColor = green;
+  static const Color surfaceColor = surface;
+  static const Color errorColor = red;
+
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,

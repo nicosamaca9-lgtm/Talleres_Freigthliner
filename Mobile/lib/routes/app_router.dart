@@ -4,7 +4,9 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/dashboard/client_dashboard_screen.dart';
 import '../screens/dashboard/mechanic_dashboard_screen.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/profile/privacy_policy_screen.dart';
 
 GoRouter createAppRouter(AuthProvider authProvider) {
   return GoRouter(
@@ -17,6 +19,7 @@ GoRouter createAppRouter(AuthProvider authProvider) {
       final isAuthRoute = location == '/login' || location == '/register';
       final isClientRoute = location.startsWith('/client');
       final isMechanicRoute = location.startsWith('/mechanic');
+      final isAdminRoute = location.startsWith('/admin');
       final isProfileRoute = location == '/profile';
 
       if (!authProvider.isAuthenticated && !isAuthRoute) {
@@ -31,7 +34,12 @@ GoRouter createAppRouter(AuthProvider authProvider) {
         return '/login';
       }
 
+      if (isAdminRoute && !authProvider.isAdmin) {
+        return '/login';
+      }
+
       if (isAuthRoute) {
+        if (authProvider.isAdmin) return '/admin/dashboard';
         if (authProvider.isClient) return '/client/dashboard';
         if (authProvider.isMechanic) return '/mechanic/dashboard';
       }
@@ -56,8 +64,16 @@ GoRouter createAppRouter(AuthProvider authProvider) {
         builder: (context, state) => const MechanicDashboardScreen(),
       ),
       GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
     ],
   );

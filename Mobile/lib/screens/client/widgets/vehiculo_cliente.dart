@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/ui_components.dart';
 import '../../../providers/vehicle_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../models/vehicle_model.dart';
 import 'vehicle_registration_dialog.dart';
 import 'accept_invitation_dialog.dart';
@@ -22,7 +23,10 @@ class _VehiclesTabState extends State<VehiclesTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<VehicleProvider>().loadMyVehicles();
+      final userId = context.read<AuthProvider>().userId;
+      if (userId != null) {
+        context.read<VehicleProvider>().loadMyVehicles(userId);
+      }
     });
   }
 
@@ -33,7 +37,10 @@ class _VehiclesTabState extends State<VehiclesTab> {
     );
 
     if (result == true && mounted) {
-      context.read<VehicleProvider>().loadMyVehicles();
+      final userId = context.read<AuthProvider>().userId;
+      if (userId != null) {
+        context.read<VehicleProvider>().loadMyVehicles(userId);
+      }
     }
   }
 
@@ -76,7 +83,10 @@ class _VehiclesTabState extends State<VehiclesTab> {
                 );
               }
 
-              List<Widget> vehicleCards = provider.vehicles.map((v) => _VehicleSummaryCard(vehicle: v)).toList();
+              List<Widget> vehicleCards = provider.vehicles.map((v) {
+                final activeOrder = provider.activeServiceOrders.where((o) => o['id_vehiculo'] == v.idVehiculo).firstOrNull;
+                return _VehicleSummaryCard(vehicle: v, activeOrder: activeOrder);
+              }).toList();
 
               if (vehicleCards.isEmpty) {
                 vehicleCards = [
@@ -166,9 +176,10 @@ class _VehiclesTabState extends State<VehiclesTab> {
 }
 
 class _VehicleSummaryCard extends StatelessWidget {
-  const _VehicleSummaryCard({required this.vehicle});
+  const _VehicleSummaryCard({required this.vehicle, this.activeOrder});
   
   final VehicleModel vehicle;
+  final dynamic activeOrder;
 
   void _asignarConductor(BuildContext context) {
     showDialog(
@@ -221,9 +232,22 @@ class _VehicleSummaryCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    StatusChip(
-                      text: vehicle.rolVehiculo ?? 'Registrado', 
-                      color: AppTheme.blue
+                    Row(
+                      children: [
+                        StatusChip(
+                          text: vehicle.rolVehiculo ?? 'Registrado', 
+                          color: AppTheme.blue
+                        ),
+                        if (activeOrder != null) ...[
+                          const SizedBox(width: 8),
+                          StatusChip(
+                            text: activeOrder['estado_orden'] == 'EN_DIAGNOSTICO' ? 'En Taller' : 
+                                  activeOrder['estado_orden'] == 'EN_REPARACION' ? 'En Reparación' : 
+                                  activeOrder['estado_orden'] == 'LISTO_PARA_ENTREGA' ? 'Listo p/ Entrega' : 'En Taller', 
+                            color: activeOrder['estado_orden'] == 'LISTO_PARA_ENTREGA' ? AppTheme.amber : AppTheme.green,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

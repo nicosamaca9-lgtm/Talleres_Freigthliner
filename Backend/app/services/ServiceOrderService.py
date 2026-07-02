@@ -10,13 +10,29 @@ class ServiceOrderService:
     
     @staticmethod
     def create_order(db: Session, order_data: ServiceOrderCreate):
+        from app.models.BookingEntity import Booking, ConfirmationState
         # Verificar que el vehículo existe
         vehicle = db.query(Vehicle).filter(Vehicle.id_vehiculo == order_data.id_vehiculo).first()
         if not vehicle:
             raise HTTPException(status_code=404, detail="El vehículo especificado no existe en el sistema.")
+        
+        # Determinar el consecutivo (numero_orden)
+        last_order = db.query(ServiceOrder).order_by(ServiceOrder.id_orden.desc()).first()
+        next_id = 1 if not last_order else last_order.id_orden + 1
+        numero_orden = f"ORD-{next_id:04d}"
+        
+        order_dict = order_data.model_dump()
+        order_dict['numero_orden'] = numero_orden
             
-        db_order = ServiceOrder(**order_data.model_dump())
+        db_order = ServiceOrder(**order_dict)
         db.add(db_order)
+        
+        # Si tiene agendamiento vinculado, actualizar su estado a EN_TALLER
+        if db_order.id_agendamiento:
+            booking = db.query(Booking).filter(Booking.id_agendamiento == db_order.id_agendamiento).first()
+            if booking:
+                booking.estado_confirmacion = ConfirmationState.EN_TALLER
+                
         db.commit()
         db.refresh(db_order)
         return db_order

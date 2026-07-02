@@ -28,6 +28,7 @@ class AuthProvider extends ChangeNotifier {
   String? get userLastName => _userLastName;
   bool get isAuthenticated => _token != null;
   bool get isClient => _role == 'client' || _role == 'cliente';
+  bool get isAdmin => _role == 'admin' || _role == 'administrador';
   bool get isMechanic {
     final r = _role?.trim().toLowerCase();
     return r == 'mechanic' || r == 'mecanico' || r == 'mecánico' || r == 'tecnico' || r == 'técnico';
