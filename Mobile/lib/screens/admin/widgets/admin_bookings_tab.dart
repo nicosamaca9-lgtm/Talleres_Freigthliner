@@ -142,6 +142,10 @@ class _AdminBookingsTabState extends State<AdminBookingsTab> {
               ],
             ),
             const SizedBox(height: 12),
+            if (booking.clienteNombre != null)
+              _buildInfoRow(Icons.person, 'Cliente', booking.clienteNombre!),
+            if (booking.placaVehiculo != null)
+              _buildInfoRow(Icons.directions_car, 'Placa', booking.placaVehiculo!),
             _buildInfoRow(
               Icons.calendar_today,
               'Fecha',

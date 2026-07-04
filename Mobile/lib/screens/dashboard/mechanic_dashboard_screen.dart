@@ -9,15 +9,36 @@ import '../mechanic/widgets/assigned_orders_tab.dart';
 import '../mechanic/widgets/completed_history_tab.dart';
 import '../mechanic/widgets/mechanic_schedule_tab.dart';
 
+import 'package:screen_protector/screen_protector.dart';
+
 class MechanicDashboardScreen extends StatefulWidget {
   const MechanicDashboardScreen({super.key});
 
   @override
   State<MechanicDashboardScreen> createState() => _MechanicDashboardScreenState();
 }
-
 class _MechanicDashboardScreenState extends State<MechanicDashboardScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _blockScreenshots();
+  }
+
+  Future<void> _blockScreenshots() async {
+    try {
+      await ScreenProtector.preventScreenshotOn();
+    } catch (e) {
+      debugPrint('No se pudo bloquear capturas: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    ScreenProtector.preventScreenshotOff();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

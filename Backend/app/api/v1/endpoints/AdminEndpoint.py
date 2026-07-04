@@ -159,3 +159,73 @@ def get_vehicle_history(
         return AdminService.get_vehicle_history(db, placa)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+from app.schemas.ReceiptSchema import ReceiptUpdate
+
+@router.get("/receipts", response_model=List[ReceiptResponse])
+def get_all_receipts(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    return AdminService.get_all_receipts(db)
+
+@router.get("/receipts/placa/{placa}", response_model=List[ReceiptResponse])
+def get_receipts_by_placa(
+    placa: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    return AdminService.get_receipts_by_placa(db, placa)
+
+@router.patch("/receipts/{id_recibo}", response_model=ReceiptResponse)
+def update_receipt(
+    id_recibo: int,
+    data: ReceiptUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    try:
+        return AdminService.update_receipt(db, id_recibo, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/receipts/{id_recibo}")
+def delete_receipt(
+    id_recibo: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    try:
+        AdminService.delete_receipt(db, id_recibo)
+        return {"mensaje": "Recibo eliminado exitosamente"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/receipts/{id_recibo}/finalizar", response_model=ReceiptResponse)
+def finalize_receipt(
+    id_recibo: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    try:
+        return AdminService.finalize_receipt(db, id_recibo)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class UserUpdate(BaseModel):
+    nombre: str | None = None
+    apellido: str | None = None
+    telefono: str | None = None
+    cedula: str | None = None
+
+@router.patch("/users/{id_usuario}", response_model=UserResponse)
+def update_user(
+    id_usuario: int,
+    data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_roles(UserRole.admin.value))
+):
+    try:
+        return AdminService.update_user(db, id_usuario, data.model_dump(exclude_unset=True))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

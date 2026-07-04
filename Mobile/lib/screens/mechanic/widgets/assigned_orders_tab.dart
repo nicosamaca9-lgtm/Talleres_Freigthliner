@@ -122,18 +122,11 @@ class _AssignedOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.numeroOrden.isNotEmpty ? order.numeroOrden : 'ORD-${order.idOrden}',
+                      'Placa: ${order.placaVehiculo ?? 'Sin Placa'}',
                       style: GoogleFonts.rajdhani(
                         color: AppTheme.text,
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      'Vehículo ID: ${order.idVehiculo}',
-                      style: GoogleFonts.dmSans(
-                        color: AppTheme.textMuted,
-                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -178,8 +171,7 @@ class _AssignedOrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          InfoLine(label: 'Cliente:', value: order.clienteNombre),
-          const SizedBox(height: 8),
+
           InfoLine(label: 'Ingreso:', value: '${order.fechaIngreso} ${order.horaIngreso}'),
           const SizedBox(height: 20),
           Row(

@@ -6,9 +6,9 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/dashboard_header.dart';
 import 'widgets/admin_orders_tab.dart';
-import 'widgets/admin_reports_tab.dart';
-import 'widgets/admin_chat_tab.dart';
 import 'widgets/admin_more_options_tab.dart';
+import 'widgets/admin_bookings_tab.dart';
+import 'widgets/admin_chat_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -23,8 +23,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
+      const AdminBookingsTab(),
       const AdminOrdersTab(),
-      const AdminReportsTab(),
       const AdminChatTab(),
       const AdminMoreOptionsTab(),
     ];
@@ -70,12 +70,12 @@ class _AdminBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       const _AdminNavItem(
-        label: 'Órdenes',
-        icon: Icons.build_circle_rounded,
+        label: 'Citas',
+        icon: Icons.calendar_month_rounded,
       ),
       const _AdminNavItem(
-        label: 'Historial',
-        icon: Icons.history_rounded,
+        label: 'Órdenes',
+        icon: Icons.build_circle_rounded,
       ),
       const _AdminNavItem(
         label: 'Chat',

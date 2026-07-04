@@ -20,9 +20,11 @@ class ReceiptItemResponse(ReceiptItemBase):
         from_attributes = True
 
 class ReceiptBase(BaseModel):
-    id_orden: int
+    id_orden: Optional[int] = None
+    tipo_documento: str = "RECIBO"
     cliente_nombre: str
     cliente_nit: str
+    cliente_telefono: Optional[str] = None
     cliente_direccion: Optional[str] = None
     cliente_ciudad: str = "DUITAMA"
     vendedor: Optional[str] = None
@@ -34,8 +36,24 @@ class ReceiptBase(BaseModel):
 class ReceiptCreate(ReceiptBase):
     items: List[ReceiptItemCreate]
 
+class ReceiptUpdate(BaseModel):
+    tipo_documento: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    cliente_nit: Optional[str] = None
+    cliente_telefono: Optional[str] = None
+    cliente_direccion: Optional[str] = None
+    cliente_ciudad: Optional[str] = None
+    vendedor: Optional[str] = None
+    placa: Optional[str] = None
+    forma_pago: Optional[str] = None
+    concepto: Optional[str] = None
+    nota_pie: Optional[str] = None
+    items: Optional[List[ReceiptItemCreate]] = None
+
 class ReceiptResponse(ReceiptBase):
     id_recibo: int
+    numero_recibo: str
+    estado: str
     fecha_emision: datetime
     fecha_vencimiento: Optional[datetime] = None
     subtotal: float

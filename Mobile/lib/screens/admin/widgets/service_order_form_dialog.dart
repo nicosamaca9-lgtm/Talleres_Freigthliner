@@ -25,6 +25,7 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
 
   final _placaController = TextEditingController();
   int? _foundVehicleId;
+  bool _vehicleNotFound = false;
 
   final _clienteNombreController = TextEditingController();
   final _clienteDocController = TextEditingController();
@@ -65,9 +66,19 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
   void _fillFromBooking(BookingModel booking) {
     _foundVehicleId = booking.idVehiculo;
     _trabajosController.text = booking.observaciones ?? 'Revisión General';
-    _clienteNombreController.text = 'Cliente Cita ${booking.idAgendamiento}';
-    _clienteDocController.text = '123456789';
-    _clienteTelController.text = '3000000000';
+    if (booking.placaVehiculo != null) {
+      _placaController.text = booking.placaVehiculo!;
+      _vehicleNotFound = false; // Asumimos que si viene de cita ya está registrado (o se registró)
+    }
+    if (booking.clienteNombre != null) {
+      _clienteNombreController.text = booking.clienteNombre!;
+    }
+    if (booking.clienteTelefono != null) {
+      _clienteTelController.text = booking.clienteTelefono!;
+    }
+    if (booking.clienteCedula != null) {
+      _clienteDocController.text = booking.clienteCedula!;
+    }
   }
 
   @override
@@ -91,23 +102,39 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
     setState(() {
       _isSearchingVehicle = true;
       _foundVehicleId = null;
+      _vehicleNotFound = false;
     });
 
     try {
       final vehicleData = await context.read<AdminProvider>().findVehicleByPlate(placa);
       setState(() {
         _foundVehicleId = vehicleData['id_vehiculo'];
+        _vehicleNotFound = false;
+        if (vehicleData['propietario_nombre'] != null) {
+          _clienteNombreController.text = vehicleData['propietario_nombre'].toString();
+        }
+        if (vehicleData['propietario_cedula'] != null) {
+          _clienteDocController.text = vehicleData['propietario_cedula'].toString();
+        }
+        if (vehicleData['propietario_telefono'] != null) {
+          _clienteTelController.text = vehicleData['propietario_telefono'].toString();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vehículo encontrado en el sistema.'), backgroundColor: AppTheme.green),
+          const SnackBar(content: Text('Vehículo y propietario encontrados.'), backgroundColor: AppTheme.green),
         );
       });
     } catch (e) {
+      // Vehículo no registrado — permitir continuar con datos manuales
       setState(() {
         _foundVehicleId = null;
+        _vehicleNotFound = true;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppTheme.red),
+          const SnackBar(
+            content: Text('Vehículo no registrado en el sistema. Ingresa los datos del cliente manualmente.'),
+            backgroundColor: Colors.orange,
+          ),
         );
       }
     } finally {
@@ -121,14 +148,10 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    if (_hasBooking && _selectedBooking == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes seleccionar una cita confirmada')));
-      return;
-    }
-    
-    if (!_hasBooking && _foundVehicleId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes buscar un vehículo válido por placa')));
+
+    final placa = _placaController.text.trim().toUpperCase();
+    if (placa.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes ingresar la placa del vehículo')));
       return;
     }
 
@@ -137,8 +160,10 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
     try {
       final now = DateTime.now();
       final data = {
-        'id_vehiculo': _hasBooking ? _selectedBooking!.idVehiculo : _foundVehicleId,
-        'id_agendamiento': _hasBooking ? _selectedBooking!.idAgendamiento : null,
+        // Si el vehículo fue encontrado, enviamos el id; si no, enviamos la placa para que el backend lo cree
+        if (_foundVehicleId != null) 'id_vehiculo': _foundVehicleId
+        else 'placa_vehiculo_nuevo': placa,
+        'id_agendamiento': _hasBooking && _selectedBooking != null ? _selectedBooking!.idAgendamiento : null,
         'fecha_ingreso': DateFormat('yyyy-MM-dd').format(now),
         'hora_ingreso': DateFormat('HH:mm:ss').format(now),
         'cliente_nombre': _clienteNombreController.text,
@@ -202,8 +227,42 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Buscador de Placa SIEMPRE visible
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _placaController,
+                              label: 'Placa del Vehículo',
+                              icon: Icons.numbers,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.green,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            onPressed: _isSearchingVehicle ? null : _searchVehicle,
+                            child: _isSearchingVehicle
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.search, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      if (_foundVehicleId != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                          child: Text('✅ Vehículo registrado. Datos del propietario cargados.', style: const TextStyle(color: AppTheme.green, fontSize: 12)),
+                        ),
+                      if (_vehicleNotFound)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                          child: Text('⚠️ Vehículo no registrado. Completa los datos del cliente manualmente.', style: TextStyle(color: Colors.orange.shade300, fontSize: 12)),
+                        ),
+                      const SizedBox(height: 16),
                       SwitchListTile(
-                        title: Text('¿Viene con cita agendada?', style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.bold)),
+                        title: Text('¿Vincular con cita agendada?', style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.bold)),
                         value: _hasBooking,
                         activeColor: AppTheme.green,
                         onChanged: widget.booking != null ? null : (val) {
@@ -223,9 +282,11 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                             border: OutlineInputBorder(),
                           ),
                           items: _confirmedBookings.map((b) {
+                            final primerNombre = (b.clienteNombre ?? 'ID ' + b.idUsuario.toString()).split(' ').first;
+                            final placa = b.placaVehiculo ?? b.idVehiculo.toString();
                             return DropdownMenuItem(
                               value: b,
-                              child: Text('Cita #${b.idAgendamiento} - Fecha: ${DateFormat('dd/MM').format(b.fechaCita)}'),
+                              child: Text('${DateFormat('dd/MM').format(b.fechaCita)} - $primerNombre - $placa'),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -237,36 +298,7 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                             }
                           },
                         ),
-                      ] else ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: _placaController,
-                                label: 'Placa del Vehículo',
-                                icon: Icons.numbers,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.green,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              onPressed: _isSearchingVehicle ? null : _searchVehicle,
-                              child: _isSearchingVehicle
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : const Icon(Icons.search, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                        if (_foundVehicleId != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text('✅ Vehículo ID: $_foundVehicleId verificado', style: const TextStyle(color: AppTheme.green, fontSize: 12)),
-                          ),
-                      ]
+                      ],
                     ],
                   ),
                 ),
@@ -280,7 +312,12 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                   children: [
                     Expanded(child: _buildTextField(controller: _clienteDocController, label: 'Cédula/NIT', icon: Icons.badge)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(controller: _clienteTelController, label: 'Teléfono', icon: Icons.phone)),
+                    Expanded(child: _buildTextField(controller: _clienteTelController, label: 'Teléfono (10 dígitos)', icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) {
+                      if (v == null || v.isEmpty) return null; // opcional
+                      final digits = v.replaceAll(RegExp(r'\D'), '');
+                      if (digits.length != 10) return '10 dígitos requeridos';
+                      return null;
+                    })),
                   ],
                 ),
                 

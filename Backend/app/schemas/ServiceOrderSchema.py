@@ -5,7 +5,7 @@ from app.models.ServiceOrderEntity import ServiceOrderState
 
 class ServiceOrderBase(BaseModel):
     numero_orden: Optional[str] = Field(None, description="Consecutivo automático, opcional al crear")
-    id_vehiculo: int = Field(..., description="ID del vehículo")
+    id_vehiculo: Optional[int] = Field(None, description="ID del vehículo")
     id_mecanico: Optional[int] = Field(None, description="ID del mecánico asignado (puede ser asignado después)")
     id_agendamiento: Optional[int] = Field(None, description="ID del agendamiento si aplica")
     
@@ -30,7 +30,8 @@ class ServiceOrderBase(BaseModel):
     estado_orden: ServiceOrderState = Field(default=ServiceOrderState.EN_DIAGNOSTICO)
 
 class ServiceOrderCreate(ServiceOrderBase):
-    pass
+    id_vehiculo: Optional[int] = Field(None, description="ID del vehículo (si ya está registrado)")
+    placa_vehiculo_nuevo: Optional[str] = Field(None, description="Placa del vehículo a crear si no está registrado")
 
 class ServiceOrderUpdate(BaseModel):
     id_mecanico: Optional[int] = None
@@ -41,6 +42,7 @@ class ServiceOrderUpdate(BaseModel):
 
 class ServiceOrderResponse(ServiceOrderBase):
     id_orden: int
+    placa_vehiculo: Optional[str] = None
 
     class Config:
         from_attributes = True

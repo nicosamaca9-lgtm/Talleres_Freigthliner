@@ -76,4 +76,45 @@ class AppTheme {
       fontWeight: FontWeight.bold,
     );
   }
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+      primaryColor: green,
+      colorScheme: const ColorScheme.light(
+        primary: green,
+        surface: Colors.white,
+        error: red,
+      ),
+      textTheme: GoogleFonts.dmSansTextTheme(
+        ThemeData(brightness: Brightness.light).textTheme
+      ).copyWith(
+        bodyMedium: GoogleFonts.dmSans(color: const Color(0xFF1F2937)),
+        bodySmall: GoogleFonts.dmSans(color: const Color(0xFF4B5563)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: GoogleFonts.dmSans(color: const Color(0xFF9CA3AF), fontSize: 13),
+        labelStyle: GoogleFonts.dmSans(color: const Color(0xFF6B7280), fontSize: 13),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: green, width: 1),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: red, width: 1),
+        ),
+      ),
+    );
+  }
 }

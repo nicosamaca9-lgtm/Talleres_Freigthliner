@@ -47,3 +47,7 @@ class ServiceOrder(Base):
     # Relaciones (opcionales para usar en consultas ORM)
     vehiculo = relationship("Vehicle")
     mecanico = relationship("User")
+
+    @property
+    def placa_vehiculo(self) -> str:
+        return self.vehiculo.placa if self.vehiculo else None

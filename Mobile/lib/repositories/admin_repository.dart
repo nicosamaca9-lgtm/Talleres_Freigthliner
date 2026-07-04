@@ -143,6 +143,77 @@ class AdminRepository {
     } catch (e) { throw _handleError(e, 'Vehículo no encontrado'); }
   }
 
+  Future<List<dynamic>> getAllVehicles() async {
+    try {
+      final response = await apiClient.get('/vehicles/');
+      return response.data;
+    } catch (e) {
+      throw _handleError(e, 'Error al obtener todos los vehículos');
+    }
+  }
+
+  Future<List<dynamic>> getAllReceipts() async {
+    try {
+      final response = await apiClient.get('/admin/receipts');
+      return response.data;
+    } catch (e) {
+      throw _handleError(e, 'Error al obtener recibos');
+    }
+  }
+
+  Future<dynamic> createReceipt(Map<String, dynamic> data) async {
+    try {
+      final response = await apiClient.post('/admin/receipts', data: data);
+      return response.data;
+    } catch (e) {
+      throw _handleError(e, 'Error al crear recibo');
+    }
+  }
+
+  Future<dynamic> updateReceipt(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await apiClient.patch('/admin/receipts/$id', data: data);
+      return response.data;
+    } catch (e) {
+      throw _handleError(e, 'Error al actualizar recibo');
+    }
+  }
+
+  Future<void> deleteReceipt(int id) async {
+    try {
+      await apiClient.delete('/admin/receipts/$id');
+    } catch (e) {
+      throw _handleError(e, 'Error al eliminar recibo');
+    }
+  }
+
+  Future<dynamic> finalizeReceipt(int id) async {
+    try {
+      final response = await apiClient.post('/admin/receipts/$id/finalizar');
+      return response.data;
+    } catch (e) {
+      throw _handleError(e, 'Error al finalizar recibo');
+    }
+  }
+
+  Future<UserModel> updateUser(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await apiClient.patch('/admin/users/$id', data: data);
+      return UserModel.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e, 'Error al actualizar usuario');
+    }
+  }
+
+  Future<UserModel> createMechanic(Map<String, dynamic> data) async {
+    try {
+      final response = await apiClient.post('/admin/mechanic/register', data: data);
+      return UserModel.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e, 'Error al crear mecánico');
+    }
+  }
+
   Exception _handleError(dynamic e, String defaultMessage) {
     if (e is DioException) {
       return Exception(e.response?.data['detail'] ?? defaultMessage);

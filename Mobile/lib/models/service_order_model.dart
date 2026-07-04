@@ -18,6 +18,7 @@ class ServiceOrderModel {
   final String trabajosARealizar;
   final String? informeTrabajo;
   final String estadoOrden;
+  final String? placaVehiculo;
 
   ServiceOrderModel({
     required this.idOrden,
@@ -39,6 +40,7 @@ class ServiceOrderModel {
     required this.trabajosARealizar,
     this.informeTrabajo,
     required this.estadoOrden,
+    this.placaVehiculo,
   });
 
   factory ServiceOrderModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class ServiceOrderModel {
       trabajosARealizar: json['trabajos_a_realizar']?.toString() ?? 'Sin detalles',
       informeTrabajo: json['informe_trabajo']?.toString(),
       estadoOrden: json['estado_orden']?.toString() ?? 'EN_DIAGNOSTICO',
+      placaVehiculo: json['placa_vehiculo']?.toString(),
     );
   }
 }

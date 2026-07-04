@@ -48,7 +48,8 @@ class BookingService:
     @staticmethod
     def get_all_bookings(db: Session, skip: int = 0, limit: int = 100):
         """Lista todos los agendamientos registrados"""
-        return db.query(Booking).offset(skip).limit(limit).all()
+        from sqlalchemy.orm import joinedload
+        return db.query(Booking).options(joinedload(Booking.user), joinedload(Booking.vehicle)).offset(skip).limit(limit).all()
 
     @staticmethod
     def get_bookings_by_vehicle(db: Session, id_vehiculo: int):
@@ -58,8 +59,8 @@ class BookingService:
     @staticmethod
     def get_bookings_by_user(db: Session, id_usuario: int):
         """Busca todos los agendamientos activos de un usuario y cancela los vencidos"""
-        from datetime import datetime
-        bookings = db.query(Booking).filter(Booking.id_usuario == id_usuario).order_by(Booking.fecha_cita.desc(), Booking.hora_cita.desc()).all()
+        from sqlalchemy.orm import joinedload
+        bookings = db.query(Booking).options(joinedload(Booking.vehicle), joinedload(Booking.user)).filter(Booking.id_usuario == id_usuario).order_by(Booking.fecha_cita.desc(), Booking.hora_cita.desc()).all()
         now = datetime.now()
         
         for b in bookings:

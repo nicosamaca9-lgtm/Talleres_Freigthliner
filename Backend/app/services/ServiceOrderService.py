@@ -11,18 +11,45 @@ class ServiceOrderService:
     @staticmethod
     def create_order(db: Session, order_data: ServiceOrderCreate):
         from app.models.BookingEntity import Booking, ConfirmationState
-        # Verificar que el vehículo existe
-        vehicle = db.query(Vehicle).filter(Vehicle.id_vehiculo == order_data.id_vehiculo).first()
-        if not vehicle:
-            raise HTTPException(status_code=404, detail="El vehículo especificado no existe en el sistema.")
+        from app.models.VehicleEntity import TipoVehiculoEnum
+
+        # Determinar el id_vehiculo: puede venir directo o hay que crearlo por placa
+        id_vehiculo = order_data.id_vehiculo
+        
+        if id_vehiculo is None:
+            # Intento crear o recuperar por la placa enviada
+            if not order_data.placa_vehiculo_nuevo:
+                raise HTTPException(status_code=400, detail="Debes proporcionar id_vehiculo o placa_vehiculo_nuevo.")
+            
+            placa = order_data.placa_vehiculo_nuevo.strip().upper()
+            vehicle = db.query(Vehicle).filter(Vehicle.placa == placa).first()
+            
+            if not vehicle:
+                # Crear vehículo con datos mínimos
+                vehicle = Vehicle(
+                    placa=placa,
+                    marca="Sin Registrar",
+                    modelo="Sin Registrar",
+                    tipo_vehiculo=TipoVehiculoEnum.otro,
+                )
+                db.add(vehicle)
+                db.flush()  # Obtener el id_vehiculo sin hacer commit todavía
+            
+            id_vehiculo = vehicle.id_vehiculo
+        else:
+            # Verificar que el vehículo existe
+            vehicle = db.query(Vehicle).filter(Vehicle.id_vehiculo == id_vehiculo).first()
+            if not vehicle:
+                raise HTTPException(status_code=404, detail="El vehículo especificado no existe en el sistema.")
         
         # Determinar el consecutivo (numero_orden)
         last_order = db.query(ServiceOrder).order_by(ServiceOrder.id_orden.desc()).first()
         next_id = 1 if not last_order else last_order.id_orden + 1
         numero_orden = f"ORD-{next_id:04d}"
         
-        order_dict = order_data.model_dump()
+        order_dict = order_data.model_dump(exclude={'placa_vehiculo_nuevo'})
         order_dict['numero_orden'] = numero_orden
+        order_dict['id_vehiculo'] = id_vehiculo  # Asegurar que siempre sea el correcto
             
         db_order = ServiceOrder(**order_dict)
         db.add(db_order)

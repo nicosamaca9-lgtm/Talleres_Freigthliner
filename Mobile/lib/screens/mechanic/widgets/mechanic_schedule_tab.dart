@@ -81,7 +81,7 @@ class MechanicScheduleTab extends StatelessWidget {
                         month: month,
                         time: time,
                         service: order.trabajosARealizar,
-                        vehicle: 'Cliente: ${order.clienteNombre}',
+                        vehicle: 'Placa: ${order.placaVehiculo ?? 'N/A'}',
                       );
                     }).toList(),
                   );

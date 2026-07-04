@@ -44,7 +44,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
           ),
           body: () {
             final activeOrders = provider.serviceOrders.where((o) => 
-                o.estadoOrden == 'EN_DIAGNOSTICO' || o.estadoOrden == 'EN_REPARACION'
+                o.estadoOrden == 'EN_DIAGNOSTICO' || o.estadoOrden == 'EN_REPARACION' || o.estadoOrden == 'LISTO_PARA_ENTREGA'
             ).toList();
 
             if (provider.isLoading && activeOrders.isEmpty) {
@@ -129,7 +129,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
             ),
             const SizedBox(height: 16),
             _buildInfoRow(Icons.person_rounded, 'Cliente', order.clienteNombre),
-            _buildInfoRow(Icons.directions_car_rounded, 'Vehículo ID', order.idVehiculo.toString()),
+            const SizedBox(height: 12),
+            _buildInfoRow(Icons.directions_car_rounded, 'Placa', order.placaVehiculo ?? 'ID: ${order.idVehiculo}'),
             _buildInfoRow(Icons.build_rounded, 'Estado', order.estadoOrden),
             
             const SizedBox(height: 12),
@@ -285,12 +286,25 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                   ),
                 ),
               ),
+            ] else if (order.estadoOrden == 'LISTO_PARA_ENTREGA') ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _confirmDelivery(context, order, provider),
+                  icon: const Icon(Icons.handshake_rounded),
+                  label: const Text('Confirmar Entrega Física'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.amber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ),
             ] else ...[
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: hasReport ? () => _finishOrder(context, order, provider) : null,
-                  icon: const Icon(Icons.check_circle),
+                  icon: const Icon(Icons.check_circle_outline),
                   label: const Text('Finalizar Orden'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.green,
@@ -322,7 +336,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
       await provider.finishServiceOrder(order.idOrden);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Orden finalizada exitosamente.'), backgroundColor: AppTheme.green),
+          const SnackBar(content: Text('Orden finalizada. Vehículo listo para entrega.'), backgroundColor: AppTheme.green),
         );
       }
     } catch (e) {
@@ -333,6 +347,48 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
       }
     }
   }
+
+  Future<void> _confirmDelivery(BuildContext context, ServiceOrderModel order, AdminProvider provider) async {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.bg,
+        title: const Text('Confirmar Entrega Física', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          '¿Está seguro de que el vehículo va a salir del taller? Esta acción cambiará el estado a ENTREGADO.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.amber, foregroundColor: Colors.black),
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close dialog
+              try {
+                await provider.deliverServiceOrder(order.idOrden);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Entrega física confirmada.'), backgroundColor: AppTheme.green),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString()), backgroundColor: AppTheme.red),
+                  );
+                }
+              }
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _editReport(BuildContext context, ServiceOrderModel order, AdminProvider provider) async {
     final rawText = order.informeTrabajo ?? '';

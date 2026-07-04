@@ -26,6 +26,10 @@ class BookingResponse(BookingBase):
     id_agendamiento: int
     estado_confirmacion: ConfirmationState
     motivo_rechazo: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    cliente_telefono: Optional[str] = None
+    cliente_cedula: Optional[str] = None
+    placa_vehiculo: Optional[str] = None
 
     class Config:
         from_attributes = True

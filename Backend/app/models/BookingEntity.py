@@ -17,8 +17,8 @@ class Booking(Base):
 
     id_agendamiento = Column(Integer, primary_key=True, index=True)
     
-    # Llaves foráneas (id_usuario queda como Integer por ahora)
-    id_usuario = Column(Integer, nullable=False) 
+    # Llaves foráneas
+    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False) 
     id_vehiculo = Column(Integer, ForeignKey("vehiculos.id_vehiculo"), nullable=False)
 
     # Campos del diagrama
@@ -31,3 +31,20 @@ class Booking(Base):
 
     # Relación orientada a objetos con la clase de tu compañero
     vehicle = relationship("Vehicle", back_populates="bookings")
+    user = relationship("User")
+
+    @property
+    def cliente_nombre(self):
+        return f"{self.user.nombre} {self.user.apellido}" if self.user else "Desconocido"
+
+    @property
+    def cliente_telefono(self):
+        return self.user.telefono if self.user else ""
+
+    @property
+    def cliente_cedula(self):
+        return self.user.cedula if self.user else ""
+
+    @property
+    def placa_vehiculo(self):
+        return self.vehicle.placa if self.vehicle else "Sin Placa"

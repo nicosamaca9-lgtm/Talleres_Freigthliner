@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/admin_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/service_order_model.dart';
-import '../../../models/user_model.dart';
 import '../../../core/utils/pdf_generator.dart';
+import 'package:intl/intl.dart';
 
 class AdminReportsTab extends StatefulWidget {
   const AdminReportsTab({super.key});
@@ -15,323 +15,264 @@ class AdminReportsTab extends StatefulWidget {
 }
 
 class _AdminReportsTabState extends State<AdminReportsTab> {
+  final TextEditingController _searchController = TextEditingController();
+  dynamic _selectedVehicle;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminProvider>().fetchServiceOrders();
-      context.read<AdminProvider>().fetchUsers(); // To load mechanics
+      context.read<AdminProvider>().fetchAllVehicles();
+      context.read<AdminProvider>().fetchReceipts();
     });
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _selectVehicle(dynamic vehicle) async {
+    setState(() {
+      _selectedVehicle = vehicle;
+    });
+    await context.read<AdminProvider>().fetchVehicleHistory(vehicle['placa'].toString());
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AdminProvider>(
       builder: (context, provider, child) {
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          body: () {
-            final historyOrders = provider.serviceOrders.where((o) => 
-                o.estadoOrden == 'LISTO_PARA_ENTREGA' || o.estadoOrden == 'ENTREGADO'
-            ).toList();
-
-            if (provider.isLoading && historyOrders.isEmpty) {
-              return const Center(child: CircularProgressIndicator(color: AppTheme.green));
-            }
-
-            if (historyOrders.isEmpty) {
-              return const Center(
-                child: Text('No hay órdenes finalizadas.', style: TextStyle(color: Colors.white70)),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                await provider.fetchServiceOrders();
-                await provider.fetchUsers();
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16).copyWith(bottom: 80),
-                itemCount: historyOrders.length,
-                itemBuilder: (context, index) {
-                  final order = historyOrders[index];
-                  return _buildHistoryCard(context, order, provider);
-                },
-              ),
-            );
-          }(),
-        );
+        if (_selectedVehicle != null) {
+          return _buildVehicleHistory(context, provider);
+        }
+        return _buildVehicleList(context, provider);
       },
     );
   }
 
-  Widget _buildHistoryCard(BuildContext context, ServiceOrderModel order, AdminProvider provider) {
-    Color statusColor = AppTheme.green;
-    if (order.estadoOrden == 'LISTO_PARA_ENTREGA') statusColor = AppTheme.amber;
-    if (order.estadoOrden == 'ENTREGADO') statusColor = Colors.grey;
+  Widget _buildVehicleList(BuildContext context, AdminProvider provider) {
+    if (provider.isLoading && provider.allVehicles.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.green));
+    }
 
-    final isAssigned = order.idMecanico != null;
-    final assignedMechanic = isAssigned 
-        ? provider.users.where((u) => u.idUsuario == order.idMecanico).firstOrNull 
-        : null;
+    final query = _searchController.text.trim().toUpperCase();
+    final vehicles = provider.allVehicles.where((v) {
+      if (query.isEmpty) return true;
+      final placa = v['placa'].toString().toUpperCase();
+      return placa.contains(query);
+    }).toList();
 
-    final hasReport = order.informeTrabajo != null && order.informeTrabajo!.trim().isNotEmpty;
-    final isDelivered = order.estadoOrden == 'ENTREGADO';
-
-    return Card(
-      color: const Color(0xFF0A0A0A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFF242424)),
-      ),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    order.estadoOrden.replaceAll('_', ' '),
-                    style: GoogleFonts.dmSans(
-                      color: statusColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Text(
-                  order.numeroOrden,
-                  style: GoogleFonts.dmSans(
-                    color: AppTheme.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              order.clienteNombre,
-              style: GoogleFonts.rajdhani(
-                color: AppTheme.text,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.phone_rounded, order.clienteTelefono),
-            _buildInfoRow(Icons.directions_car_filled_rounded, 'Vehículo ID: ${order.idVehiculo} - Km: ${order.kilometrajeIngreso}'),
-            const SizedBox(height: 12),
-            const Divider(color: Color(0xFF242424), height: 1),
-            const SizedBox(height: 12),
-            Text('Trabajos Realizados:', style: GoogleFonts.dmSans(color: AppTheme.textMuted, fontSize: 13)),
-            const SizedBox(height: 4),
-            Text(
-              order.trabajosARealizar,
-              style: GoogleFonts.dmSans(color: Colors.white, fontSize: 15),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF151515),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.person, color: AppTheme.green, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAssigned ? 'Mecánico: ${assignedMechanic?.nombre ?? 'Desconocido'}' : 'Sin mecánico asignado',
-                      style: GoogleFonts.dmSans(color: isAssigned ? Colors.white : AppTheme.textMuted, fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (hasReport) ...[
-              Builder(
-                builder: (context) {
-                  final rawText = order.informeTrabajo!;
-                  String displayText = rawText;
-                  List<String> imageUrls = [];
-                  
-                  final imgRegex = RegExp(r'\[IMAGENES\](.*?)\[/IMAGENES\]');
-                  final match = imgRegex.firstMatch(rawText);
-                  if (match != null) {
-                    final imagesCsv = match.group(1) ?? '';
-                    imageUrls = imagesCsv.split(',').where((u) => u.trim().isNotEmpty).toList();
-                    displayText = rawText.replaceAll(imgRegex, '').trim();
-                  }
-                  
-                  const apiBase = 'http://192.168.1.7:8000';
-
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF151515),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF333333)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Informe del Mecánico', style: GoogleFonts.dmSans(color: AppTheme.green, fontSize: 12, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(displayText, style: GoogleFonts.dmSans(color: Colors.white, fontSize: 14)),
-                        if (imageUrls.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text('Fotos de repuestos:', style: GoogleFonts.dmSans(color: AppTheme.textMuted, fontSize: 12)),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 90,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: imageUrls.length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 8),
-                              itemBuilder: (context, i) {
-                                final fullUrl = '$apiBase${imageUrls[i]}';
-                                return GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) => Dialog(
-                                        backgroundColor: Colors.transparent,
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.network(fullUrl, fit: BoxFit.contain),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      fullUrl,
-                                      width: 90,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        width: 90,
-                                        height: 90,
-                                        color: const Color(0xFF222222),
-                                        child: const Icon(Icons.broken_image, color: Colors.white38),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-            const SizedBox(height: 12),
-            if (isDelivered) ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _downloadPDF(context, order, assignedMechanic),
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Descargar Orden (PDF)'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF444444)),
-                  ),
-                ),
-              ),
-            ] else ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _deliverOrder(context, order, provider),
-                  icon: const Icon(Icons.handshake_rounded),
-                  label: const Text('Confirmar Entrega Física'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.amber,
-                    foregroundColor: Colors.black,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _downloadPDF(context, order, assignedMechanic),
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Descargar Orden (PDF)'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF444444)),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppTheme.textMuted, size: 16),
-          const SizedBox(width: 8),
-          Text(text, style: GoogleFonts.dmSans(color: AppTheme.textMuted, fontSize: 14)),
+          Text(
+            'Historial de Vehículos',
+            style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white),
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(
+              hintText: 'Buscar por placa...',
+              hintStyle: const TextStyle(color: Colors.white54),
+              prefixIcon: const Icon(Icons.search, color: Colors.white54),
+              filled: true,
+              fillColor: const Color(0xFF151515),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: vehicles.isEmpty
+                ? const Center(child: Text('No se encontraron vehículos.', style: TextStyle(color: Colors.white70)))
+                : ListView.builder(
+                    itemCount: vehicles.length,
+                    itemBuilder: (context, index) {
+                      final v = vehicles[index];
+                      return Card(
+                        color: const Color(0xFF0A0A0A),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF242424))),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: const Icon(Icons.directions_car, color: AppTheme.amber),
+                          title: Text(v['placa']?.toString() ?? 'Sin Placa', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text('${v['marca']} ${v['modelo']} - ${v['tipo_vehiculo']}', style: const TextStyle(color: Colors.white54)),
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
+                          onTap: () => _selectVehicle(v),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
   }
 
-  void _downloadPDF(BuildContext context, ServiceOrderModel order, UserModel? mechanic) async {
-    try {
-      await PdfGenerator.generateServiceOrderPdf(order, mechanic);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PDF generado y guardado en Documentos'), backgroundColor: AppTheme.green),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al generar PDF: $e'), backgroundColor: AppTheme.red),
-        );
-      }
+  Widget _buildVehicleHistory(BuildContext context, AdminProvider provider) {
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.green));
     }
-  }
 
-  Future<void> _deliverOrder(BuildContext context, ServiceOrderModel order, AdminProvider provider) async {
-    try {
-      await provider.deliverServiceOrder(order.idOrden);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vehículo entregado al cliente.'), backgroundColor: AppTheme.green),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.red),
-        );
-      }
+    final history = provider.vehicleHistory;
+    if (history == null) {
+      return const Center(child: Text('No se pudo cargar el historial.', style: TextStyle(color: Colors.redAccent)));
     }
+
+    final vehiculo = history['vehiculo'];
+    final List<dynamic> rawOrders = history['ordenes'] ?? [];
+    
+    final vehicleReceipts = provider.receipts.where((r) => r['placa'] == vehiculo['placa']).toList();
+    final formatCurrency = NumberFormat.currency(locale: 'es_CO', symbol: '\$');
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => setState(() => _selectedVehicle = null),
+              ),
+              Text(
+                'Placa: ${vehiculo['placa']}',
+                style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Card(
+            color: const Color(0xFF151515),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Datos del Vehículo', style: TextStyle(color: AppTheme.amber, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Marca: ${vehiculo['marca']}', style: const TextStyle(color: Colors.white)),
+                  Text('Modelo: ${vehiculo['modelo']}', style: const TextStyle(color: Colors.white)),
+                  Text('Tipo: ${vehiculo['tipo_vehiculo']}', style: const TextStyle(color: Colors.white)),
+                  if (vehiculo['propietario_nombre'] != null)
+                     Text('Propietario: ${vehiculo['propietario_nombre']}', style: const TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text('Órdenes de Servicio', style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: rawOrders.isEmpty
+                ? const Text('Este vehículo no tiene órdenes de servicio.', style: TextStyle(color: Colors.white70))
+                : ListView.builder(
+                    itemCount: rawOrders.length,
+                    itemBuilder: (context, index) {
+                      final order = rawOrders[index];
+                      return Card(
+                        color: const Color(0xFF0A0A0A),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF242424))),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    order['numero_orden']?.toString() ?? 'Orden #${order['id_orden']}',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    order['estado_orden']?.toString() ?? '',
+                                    style: const TextStyle(color: AppTheme.green, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Fecha Ingreso: ${order['fecha_ingreso']}', style: const TextStyle(color: Colors.white70)),
+                              if (order['fecha_salida'] != null)
+                                Text('Fecha Salida: ${order['fecha_salida']}', style: const TextStyle(color: Colors.white70)),
+                              const SizedBox(height: 8),
+                              Text('Cliente: ${order['cliente_nombre']} (C.C: ${order['cliente_identificacion']} / Tel: ${order['cliente_telefono']})', style: const TextStyle(color: Colors.white)),
+                              const SizedBox(height: 4),
+                              Text('Km Ingreso: ${order['kilometraje_ingreso']} | Combustible: ${order['nivel_combustible']}', style: const TextStyle(color: Colors.white70)),
+                              const SizedBox(height: 8),
+                              Text('Trabajos: ${order['trabajos_a_realizar']}', style: const TextStyle(color: Colors.white)),
+                              if (order['informe_trabajo'] != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text('Informe: ${order['informe_trabajo']}', style: const TextStyle(color: Colors.white54)),
+                                ),
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.picture_as_pdf),
+                                  label: const Text('Descargar Orden (PDF)'),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                  onPressed: () {
+                                    final orderModel = ServiceOrderModel.fromJson(order);
+                                    PdfGenerator.generateServiceOrderPdf(orderModel, null);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 16),
+          Text('Recibos y Cotizaciones', style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: vehicleReceipts.isEmpty
+                ? const Text('Este vehículo no tiene recibos o cotizaciones.', style: TextStyle(color: Colors.white70))
+                : ListView.builder(
+                    itemCount: vehicleReceipts.length,
+                    itemBuilder: (context, index) {
+                      final receipt = vehicleReceipts[index];
+                      final isFinalizado = receipt['estado'] == 'FINALIZADO';
+                      return Card(
+                        color: const Color(0xFF0A0A0A),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF242424))),
+                        child: ListTile(
+                          leading: Icon(isFinalizado ? Icons.check_circle : Icons.edit_document, color: isFinalizado ? Colors.green : Colors.orange),
+                          title: Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Total: ${formatCurrency.format(receipt['total'])}', style: const TextStyle(color: Colors.white54)),
+                          trailing: isFinalizado 
+                              ? IconButton(
+                                  icon: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
+                                  onPressed: () => PdfGenerator.generateReceiptPdf(receipt),
+                                ) 
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -169,7 +169,13 @@ class _MyBookingsList extends StatelessWidget {
         }
 
         final allBookings = provider.myBookings;
-        final bookings = allBookings.where((b) => b.estadoConfirmacion != 'EN_TALLER' && b.estadoConfirmacion != 'CANCELADO_POR_SISTEMA').toList();
+        final now = DateTime.now();
+        final bookings = allBookings.where((b) {
+          if (b.estadoConfirmacion == 'EN_TALLER' || b.estadoConfirmacion == 'CANCELADO_POR_SISTEMA') return false;
+          // Filtrar citas vencidas (hace más de 6 horas)
+          if (b.fechaHoraCita.isBefore(now.subtract(const Duration(hours: 6)))) return false;
+          return true;
+        }).toList();
 
         if (bookings.isEmpty) {
           return DashboardCard(
@@ -387,7 +393,7 @@ class _BookingTile extends StatelessWidget {
               const Icon(Icons.calendar_today, color: AppTheme.textDim, size: 16),
               const SizedBox(width: 6),
               Text(
-                '${booking.fechaCita}  •  ${booking.horaCita}',
+                '${booking.fechaCita.toIso8601String().split('T').first}  •  ${booking.horaCita}',
                 style: GoogleFonts.dmSans(color: AppTheme.textMuted, fontSize: 14),
               ),
             ],

@@ -48,10 +48,12 @@ class CompletedHistoryTab extends StatelessWidget {
                   }
 
                   return Column(
-                    children: provider.completedOrders.map((order) {
+                    children: provider.completedOrders.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final order = entry.value;
                       return _CompletedHistoryCard(
-                        vehicle: order.numeroOrden.isNotEmpty ? order.numeroOrden : 'ORD-${order.idOrden}',
-                        plate: 'Vehículo ID: ${order.idVehiculo}',
+                        vehicle: 'Orden ${index + 1}',
+                        plate: order.placaVehiculo ?? 'N/A',
                         date: '${order.fechaIngreso} ${order.horaIngreso}',
                         order: order,
                       );

@@ -84,8 +84,7 @@ class _VehiclesTabState extends State<VehiclesTab> {
               }
 
               List<Widget> vehicleCards = provider.vehicles.map((v) {
-                final activeOrder = provider.activeServiceOrders.where((o) => o['id_vehiculo'] == v.idVehiculo).firstOrNull;
-                return _VehicleSummaryCard(vehicle: v, activeOrder: activeOrder);
+                return _VehicleSummaryCard(vehicle: v);
               }).toList();
 
               if (vehicleCards.isEmpty) {
@@ -176,10 +175,9 @@ class _VehiclesTabState extends State<VehiclesTab> {
 }
 
 class _VehicleSummaryCard extends StatelessWidget {
-  const _VehicleSummaryCard({required this.vehicle, this.activeOrder});
+  const _VehicleSummaryCard({required this.vehicle});
   
   final VehicleModel vehicle;
-  final dynamic activeOrder;
 
   void _asignarConductor(BuildContext context) {
     showDialog(
@@ -238,15 +236,6 @@ class _VehicleSummaryCard extends StatelessWidget {
                           text: vehicle.rolVehiculo ?? 'Registrado', 
                           color: AppTheme.blue
                         ),
-                        if (activeOrder != null) ...[
-                          const SizedBox(width: 8),
-                          StatusChip(
-                            text: activeOrder['estado_orden'] == 'EN_DIAGNOSTICO' ? 'En Taller' : 
-                                  activeOrder['estado_orden'] == 'EN_REPARACION' ? 'En Reparación' : 
-                                  activeOrder['estado_orden'] == 'LISTO_PARA_ENTREGA' ? 'Listo p/ Entrega' : 'En Taller', 
-                            color: activeOrder['estado_orden'] == 'LISTO_PARA_ENTREGA' ? AppTheme.amber : AppTheme.green,
-                          ),
-                        ],
                       ],
                     ),
                   ],

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
-import 'admin_overview_tab.dart';
-import 'admin_bookings_tab.dart';
 import 'admin_users_tab.dart';
 import 'admin_receipts_tab.dart';
-import 'admin_vehicles_tab.dart';
+import 'admin_overview_tab.dart';
+import 'admin_reports_tab.dart';
 
 class AdminMoreOptionsTab extends StatefulWidget {
   const AdminMoreOptionsTab({super.key});
@@ -19,15 +18,13 @@ class _AdminMoreOptionsTabState extends State<AdminMoreOptionsTab> {
 
   final List<Widget> _subTabs = [
     const AdminOverviewTab(),
-    const AdminBookingsTab(),
     const AdminUsersTab(),
     const AdminReceiptsTab(),
-    const AdminVehiclesTab(),
+    const AdminReportsTab(),
   ];
 
   final List<String> _subTabTitles = [
     'Resumen General',
-    'Citas',
     'Usuarios y Mecánicos',
     'Recibos y Facturación',
     'Historial de Vehículos',
@@ -95,10 +92,9 @@ class _AdminMoreOptionsTabState extends State<AdminMoreOptionsTab> {
             mainAxisSpacing: 14,
             children: [
               _buildMenuCard(0, Icons.dashboard_rounded, 'Resumen General', AppTheme.blue),
-              _buildMenuCard(1, Icons.calendar_month_rounded, 'Citas', AppTheme.amber),
-              _buildMenuCard(4, Icons.directions_car_filled_rounded, 'Vehículos', AppTheme.green),
-              _buildMenuCard(2, Icons.people_rounded, 'Usuarios', Colors.purple),
-              _buildMenuCard(3, Icons.receipt_long_rounded, 'Recibos', const Color(0xFF06b6d4)),
+              _buildMenuCard(1, Icons.people_rounded, 'Usuarios', Colors.purple),
+              _buildMenuCard(2, Icons.receipt_long_rounded, 'Recibos', const Color(0xFF06b6d4)),
+              _buildMenuCard(3, Icons.history_rounded, 'Historial', AppTheme.amber),
             ],
           ),
         ],

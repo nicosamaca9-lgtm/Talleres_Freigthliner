@@ -92,22 +92,33 @@ class AdminService:
     @staticmethod
     def create_receipt(db: Session, receipt_data):
         from app.schemas.ReceiptSchema import ReceiptCreate
+        import random
+        import string
         data: ReceiptCreate = receipt_data
         
-        # Ensure order exists
-        order = db.query(ServiceOrder).filter(ServiceOrder.id_orden == data.id_orden).first()
-        if not order:
-            raise ValueError("Orden de servicio no encontrada")
-            
-        # Check if receipt already exists
-        existing = db.query(Receipt).filter(Receipt.id_orden == data.id_orden).first()
-        if existing:
-            raise ValueError("Ya existe un recibo para esta orden")
+        # Ensure order exists if provided
+        if data.id_orden is not None:
+            order = db.query(ServiceOrder).filter(ServiceOrder.id_orden == data.id_orden).first()
+            if not order:
+                raise ValueError("Orden de servicio no encontrada")
+                
+            # Check if receipt already exists for this order
+            existing = db.query(Receipt).filter(Receipt.id_orden == data.id_orden).first()
+            if existing:
+                raise ValueError("Ya existe un recibo para esta orden")
+        
+        # Generate receipt number
+        prefix = "COT" if data.tipo_documento == "COTIZACION" else "REC"
+        random_suffix = ''.join(random.choices(string.digits, k=6))
+        numero_recibo = f"{prefix}-{random_suffix}"
             
         receipt = Receipt(
+            numero_recibo=numero_recibo,
             id_orden=data.id_orden,
+            tipo_documento=data.tipo_documento,
             cliente_nombre=data.cliente_nombre,
             cliente_nit=data.cliente_nit,
+            cliente_telefono=data.cliente_telefono,
             cliente_direccion=data.cliente_direccion,
             cliente_ciudad=data.cliente_ciudad,
             vendedor=data.vendedor,
@@ -115,6 +126,7 @@ class AdminService:
             forma_pago=data.forma_pago,
             concepto=data.concepto,
             nota_pie=data.nota_pie,
+            estado="BORRADOR"
         )
         
         subtotal = 0.0
@@ -147,6 +159,91 @@ class AdminService:
         return receipt
 
     @staticmethod
+    def get_all_receipts(db: Session):
+        return db.query(Receipt).order_by(Receipt.fecha_emision.desc()).all()
+
+    @staticmethod
+    def update_receipt(db: Session, id_recibo: int, update_data):
+        from app.schemas.ReceiptSchema import ReceiptUpdate
+        data: ReceiptUpdate = update_data
+        
+        receipt = db.query(Receipt).filter(Receipt.id_recibo == id_recibo).first()
+        if not receipt:
+            raise ValueError("Recibo no encontrado")
+            
+        if receipt.estado == "FINALIZADO":
+            raise ValueError("No se puede editar un recibo o cotización finalizada")
+            
+        update_dict = data.model_dump(exclude_unset=True)
+        items_data = update_dict.pop("items", None)
+        
+        for key, value in update_dict.items():
+            setattr(receipt, key, value)
+            
+        if items_data is not None:
+            # Delete old items
+            db.query(ReceiptItem).filter(ReceiptItem.id_recibo == id_recibo).delete()
+            
+            subtotal = 0.0
+            iva_total = 0.0
+            
+            for item_in in items_data:
+                item_total = item_in["cantidad"] * item_in["valor_unitario"]
+                iva = item_total * (item_in["porcentaje_iva"] / 100)
+                
+                subtotal += item_total
+                iva_total += iva
+                
+                item = ReceiptItem(
+                    id_recibo=id_recibo,
+                    descripcion=item_in["descripcion"],
+                    cantidad=item_in["cantidad"],
+                    valor_unitario=item_in["valor_unitario"],
+                    porcentaje_iva=item_in["porcentaje_iva"],
+                    total=item_total
+                )
+                db.add(item)
+                
+            receipt.subtotal = subtotal
+            receipt.iva_total = iva_total
+            receipt.total = subtotal + iva_total
+            
+        db.commit()
+        db.refresh(receipt)
+        return receipt
+
+    @staticmethod
+    def delete_receipt(db: Session, id_recibo: int):
+        receipt = db.query(Receipt).filter(Receipt.id_recibo == id_recibo).first()
+        if not receipt:
+            raise ValueError("Recibo no encontrado")
+            
+        if receipt.estado == "FINALIZADO":
+            raise ValueError("No se puede eliminar un recibo finalizado")
+            
+        db.delete(receipt)
+        db.commit()
+        return True
+
+    @staticmethod
+    def finalize_receipt(db: Session, id_recibo: int):
+        receipt = db.query(Receipt).filter(Receipt.id_recibo == id_recibo).first()
+        if not receipt:
+            raise ValueError("Recibo no encontrado")
+            
+        if receipt.estado == "FINALIZADO":
+            raise ValueError("El recibo ya está finalizado")
+            
+        receipt.estado = "FINALIZADO"
+        db.commit()
+        db.refresh(receipt)
+        return receipt
+
+    @staticmethod
+    def get_receipts_by_placa(db: Session, placa: str):
+        return db.query(Receipt).filter(Receipt.placa == placa).order_by(Receipt.fecha_emision.desc()).all()
+
+    @staticmethod
     def assign_mechanic_to_order(db: Session, id_orden: int, id_mecanico: int):
         order = db.query(ServiceOrder).filter(ServiceOrder.id_orden == id_orden).first()
         if not order:
@@ -173,6 +270,20 @@ class AdminService:
         db.delete(user)
         db.commit()
         return True
+
+    @staticmethod
+    def update_user(db: Session, id_usuario: int, data: dict):
+        user = db.query(User).filter(User.id_usuario == id_usuario).first()
+        if not user:
+            raise ValueError("Usuario no encontrado")
+            
+        for key, value in data.items():
+            if hasattr(user, key) and value is not None:
+                setattr(user, key, value)
+                
+        db.commit()
+        db.refresh(user)
+        return user
 
     @staticmethod
     def get_vehicle_history(db: Session, placa: str):

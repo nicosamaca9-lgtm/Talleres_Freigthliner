@@ -17,6 +17,7 @@ class AdminProvider with ChangeNotifier {
   List<UserModel> _users = [];
   List<ServiceOrderModel> _serviceOrders = [];
   Map<String, dynamic>? _vehicleHistory;
+  List<dynamic> _allVehicles = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -26,6 +27,7 @@ class AdminProvider with ChangeNotifier {
   List<UserModel> get users => _users;
   List<ServiceOrderModel> get serviceOrders => _serviceOrders;
   Map<String, dynamic>? get vehicleHistory => _vehicleHistory;
+  List<dynamic> get allVehicles => _allVehicles;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -136,6 +138,18 @@ class AdminProvider with ChangeNotifier {
     _setError(null);
     try {
       _users = await _repository.getAllUsers();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> fetchAllVehicles() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      _allVehicles = await _repository.getAllVehicles();
     } catch (e) {
       _setError(e.toString());
     } finally {
@@ -254,6 +268,98 @@ class AdminProvider with ChangeNotifier {
     _setLoading(true); _setError(null);
     try {
       return await _repository.getVehicleByPlate(placa);
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  List<dynamic> _receipts = [];
+  List<dynamic> get receipts => _receipts;
+
+  Future<void> fetchReceipts() async {
+    _setLoading(true); _setError(null);
+    try {
+      _receipts = await _repository.getAllReceipts();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> createReceipt(Map<String, dynamic> data) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.createReceipt(data);
+      await fetchReceipts();
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> updateReceipt(int id, Map<String, dynamic> data) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.updateReceipt(id, data);
+      await fetchReceipts();
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> deleteReceipt(int id) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.deleteReceipt(id);
+      _receipts.removeWhere((r) => r['id_recibo'] == id);
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> finalizeReceipt(int id) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.finalizeReceipt(id);
+      await fetchReceipts();
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> updateUser(int id, Map<String, dynamic> data) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.updateUser(id, data);
+      await fetchUsers();
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> createMechanic(Map<String, dynamic> data) async {
+    _setLoading(true); _setError(null);
+    try {
+      await _repository.createMechanic(data);
+      await fetchUsers();
     } catch (e) {
       _setError(e.toString());
       rethrow;
