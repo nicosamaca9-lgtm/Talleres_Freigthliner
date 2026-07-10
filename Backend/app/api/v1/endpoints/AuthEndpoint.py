@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse
+from app.schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse, ChangePasswordRequest
 from app.schemas.UserSchema import UserResponse
-from app.services.AuthService import register_client, login_user
+from app.services.AuthService import register_client, login_user, change_password
+from app.api.deps import get_current_user
+from app.models.UserEntity import User
 
 
 from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
@@ -46,5 +48,19 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     except InvalidCredentialsError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+
+@router.post("/change-password")
+def change_password_endpoint(
+    data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        return change_password(db, current_user, data.old_password, data.new_password)
+    except InvalidCredentialsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )

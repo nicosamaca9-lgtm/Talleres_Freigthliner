@@ -19,8 +19,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'admin@tfcentro.com');
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _loginError;
 
   @override
   void dispose() {
@@ -30,6 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    setState(() {
+      _loginError = null;
+    });
+
     final provider = context.read<AuthProvider>();
 
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -42,6 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (!_emailController.text.contains('@') || !_emailController.text.contains('.')) {
+      setState(() {
+        _loginError = 'Por favor, ingresa un correo electrónico válido';
+      });
+      return;
+    }
+
     final success = await provider.login(
       _emailController.text.trim(),
       _passwordController.text,
@@ -50,27 +62,64 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (provider.isClient) {
+      if (provider.isAdmin) {
+        context.go('/admin/dashboard');
+      } else if (provider.isClient) {
         context.go('/client/dashboard');
       } else if (provider.isMechanic) {
         context.go('/mechanic/dashboard');
       } else {
+        final currentRole = provider.role;
         context.read<ChatProvider>().disconnect();
         await provider.logout();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Portal inválido. Tu rol es: "${provider.role}". Solo para clientes y mecánicos.'),
+            content: Text('Portal inválido. Tu rol es: "$currentRole". Solo para clientes, mecánicos y administradores.'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage ?? 'Error desconocido'),
-          backgroundColor: Colors.red,
+      final errorMessage = provider.errorMessage ?? 'Correo o contraseña incorrectos';
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.cardColor(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Error al Iniciar Sesión',
+                  style: GoogleFonts.rajdhani(
+                    color: AppTheme.textColor(context),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            errorMessage,
+            style: GoogleFonts.dmSans(
+              color: AppTheme.textMutedColor(context),
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Intentar de nuevo',
+                style: GoogleFonts.dmSans(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
       );
       provider.clearError();
@@ -111,6 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: 'usuario@tfcentro.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  errorText: _loginError,
                 ),
                 const SizedBox(height: 14),
                 CustomTextField(
@@ -119,6 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: true,
                 ),
+
                 const SizedBox(height: 24),
                 CustomButton(
                   text: 'Iniciar Sesion',

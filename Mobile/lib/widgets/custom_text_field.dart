@@ -55,6 +55,8 @@ class CustomTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hintText,
             errorText: errorText,
+            errorMaxLines: 3,
+            errorStyle: GoogleFonts.dmSans(fontSize: 11),
           ),
         ),
       ],

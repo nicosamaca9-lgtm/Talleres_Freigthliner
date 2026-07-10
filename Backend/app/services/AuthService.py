@@ -72,3 +72,10 @@ def register_client(db: Session, data: ClientRegister):
     )
 
     return create_user(db, user)
+
+def change_password(db: Session, user: User, old_password: str, new_password: str):
+    if not verify_password(old_password, user.password_hash):
+        raise InvalidCredentialsError("Contraseña actual incorrecta")
+    user.password_hash = hash_password(new_password)
+    db.commit()
+    return {"message": "Contraseña actualizada exitosamente"}

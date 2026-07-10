@@ -85,18 +85,21 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.person_outline_rounded,
                     title: 'Datos Personales',
                     color: color,
+                    onTap: () => context.push('/profile/personal-data'),
                   ),
                   const Divider(height: 32),
                   _ProfileSetting(
                     icon: Icons.security_rounded,
                     title: 'Seguridad y Contraseña',
                     color: color,
+                    onTap: () => context.push('/profile/security'),
                   ),
                   const Divider(height: 32),
                   _ProfileSetting(
                     icon: Icons.help_outline_rounded,
                     title: 'Centro de Ayuda',
                     color: color,
+                    onTap: () => context.push('/profile/help'),
                   ),
                 ],
               ),
@@ -250,16 +253,23 @@ class _ProfileSetting extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.color,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          children: [
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -284,7 +294,9 @@ class _ProfileSetting extends StatelessWidget {
           Icons.chevron_right_rounded,
           color: AppTheme.textMutedColor(context),
         ),
-      ],
+        ],
+      ),
+      ),
     );
   }
 }

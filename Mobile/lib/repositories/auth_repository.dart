@@ -49,4 +49,19 @@ class AuthRepository {
       throw Exception('Error inesperado');
     }
   }
+
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
+    try {
+      await apiClient.post('/auth/change-password', data: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
+      return true;
+    } catch (e) {
+      if (e is DioException) {
+        throw Exception(e.response?.data['detail'] ?? 'Error al cambiar contraseña');
+      }
+      throw Exception('Error inesperado');
+    }
+  }
 }

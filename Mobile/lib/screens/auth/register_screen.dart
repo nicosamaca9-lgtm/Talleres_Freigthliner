@@ -27,12 +27,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _correoError;
   String? _cedulaError;
   String? _telefonoError;
+  String? _passwordError;
 
   void _register() async {
     setState(() {
       _correoError = null;
       _cedulaError = null;
       _telefonoError = null;
+      _passwordError = null;
     });
 
     final provider = context.read<AuthProvider>();
@@ -50,15 +52,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (!_correoController.text.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Por favor, ingresa un correo válido (debe contener @)',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (!_correoController.text.contains('@') || !_correoController.text.contains('.')) {
+      setState(() {
+        _correoError = 'Ingresa un correo válido (ejemplo@correo.com)';
+      });
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _passwordError = 'La contraseña debe tener al menos 6 caracteres';
+      });
       return;
     }
 
@@ -90,13 +94,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registro exitoso'),
-          backgroundColor: Colors.green,
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.cardColor(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: AppTheme.green, size: 28),
+              const SizedBox(width: 10),
+              Text(
+                '¡Cuenta Creada!',
+                style: GoogleFonts.rajdhani(
+                  color: AppTheme.textColor(context),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Tu cuenta ha sido creada con éxito. Ahora puedes iniciar sesión con tus credenciales.',
+            style: GoogleFonts.dmSans(
+              color: AppTheme.textMutedColor(context),
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.go('/login');
+              },
+              child: Text(
+                'Ir a Iniciar Sesión',
+                style: GoogleFonts.dmSans(color: AppTheme.green, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
       );
-      context.go('/login');
     } else {
       if (provider.errorMessage != null) {
         final message = provider.errorMessage!;
@@ -207,6 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hintText: 'Mínimo 6 caracteres',
                   controller: _passwordController,
                   obscureText: true,
+                  errorText: _passwordError,
                 ),
                 const SizedBox(height: 24),
                 CustomButton(

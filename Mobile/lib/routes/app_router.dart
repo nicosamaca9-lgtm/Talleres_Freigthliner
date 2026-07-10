@@ -7,6 +7,9 @@ import '../screens/dashboard/mechanic_dashboard_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/privacy_policy_screen.dart';
+import '../screens/profile/personal_data_screen.dart';
+import '../screens/profile/security_password_screen.dart';
+import '../screens/profile/help_center_screen.dart';
 import '../screens/chat/chat_screen.dart';
 
 GoRouter createAppRouter(AuthProvider authProvider) {
@@ -71,6 +74,18 @@ GoRouter createAppRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/personal-data',
+        builder: (context, state) => const PersonalDataScreen(),
+      ),
+      GoRoute(
+        path: '/profile/security',
+        builder: (context, state) => const SecurityPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/profile/help',
+        builder: (context, state) => const HelpCenterScreen(),
       ),
       GoRoute(
         path: '/privacy',

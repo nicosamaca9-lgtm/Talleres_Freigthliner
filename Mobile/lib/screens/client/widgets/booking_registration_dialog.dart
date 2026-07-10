@@ -103,6 +103,44 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
       return;
     }
 
+    final hour = _selectedTime!.hour;
+    final isMorning = hour >= 8 && hour < 12;
+    final isAfternoon = hour >= 14 && hour < 18;
+    
+    if (!isMorning && !isAfternoon) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.cardColor(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Horario no válido',
+            style: GoogleFonts.rajdhani(
+              color: AppTheme.textColor(context),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'El horario de atención es de 08:00 a 12:00 y de 14:00 a 18:00.\nPor favor selecciona una hora dentro de estos rangos.',
+            style: GoogleFonts.dmSans(
+              color: AppTheme.textMutedColor(context),
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'Entendido',
+                style: GoogleFonts.dmSans(color: AppTheme.green, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final userId = context.read<AuthProvider>().userId;
     if (userId == null) return;
 
@@ -111,9 +149,9 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
     final dateSolStr = DateFormat('yyyy-MM-dd').format(now);
     
     // Formato de hora HH:mm:ss
-    final hour = _selectedTime!.hour.toString().padLeft(2, '0');
+    final hourStr = _selectedTime!.hour.toString().padLeft(2, '0');
     final minute = _selectedTime!.minute.toString().padLeft(2, '0');
-    final timeStr = '$hour:$minute:00';
+    final timeStr = '$hourStr:$minute:00';
 
     final success = await context.read<BookingProvider>().createBooking(
       idUsuario: userId,
