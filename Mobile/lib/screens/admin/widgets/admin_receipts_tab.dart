@@ -68,8 +68,8 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Nuevo Documento'),
+                        icon: const Icon(Icons.add, color: Colors.black),
+                        label: const Text('Nuevo Documento', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -109,28 +109,28 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                              child: Wrap(
+                                alignment: WrapAlignment.end,
+                                spacing: 8.0,
+                                runSpacing: 8.0,
                                 children: [
                                   if (!isFinalizado) ...[
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.edit),
                                       label: const Text('Editar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                                       onPressed: () => _showReceiptDialog(context, receipt),
                                     ),
-                                    const SizedBox(width: 8),
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.check),
                                       label: const Text('Finalizar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                                       onPressed: () => _confirmFinalize(context, receipt['id_recibo']),
                                     ),
-                                    const SizedBox(width: 8),
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.delete),
                                       label: const Text('Eliminar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                                       onPressed: () => _confirmDelete(context, receipt['id_recibo']),
                                     ),
                                   ],
@@ -138,7 +138,7 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.picture_as_pdf),
                                       label: const Text('Descargar PDF'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
                                       onPressed: () => PdfGenerator.generateReceiptPdf(receipt),
                                     ),
                                 ],

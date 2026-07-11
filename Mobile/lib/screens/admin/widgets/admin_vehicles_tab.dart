@@ -89,7 +89,8 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
               }
 
               final vehiculoData = provider.vehicleHistory!['vehiculo'];
-              final ordenesData = provider.vehicleHistory!['ordenes'] as List<dynamic>;
+              final ordenesData = provider.vehicleHistory!['ordenes'] as List<dynamic>? ?? [];
+              final recibosData = provider.vehicleHistory!['recibos'] as List<dynamic>? ?? [];
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -164,6 +165,38 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
                         ),
                       );
                     }),
+                  if (recibosData.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Historial de Recibos y Cotizaciones',
+                      style: TextStyle(
+                        color: AppTheme.textColor(context),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...recibosData.map((recibo) {
+                      return Card(
+                        color: AppTheme.cardColor(context),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: AppTheme.borderColor(context)),
+                        ),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          title: Text(
+                            '${recibo['tipo_documento']} #${recibo['numero_recibo']}',
+                            style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            'Total: \$${recibo['total']} - ${recibo['estado']}',
+                            style: TextStyle(color: AppTheme.textMutedColor(context)),
+                          ),
+                        ),
+                      );
+                    }),
+                  ]
                 ],
               );
             },

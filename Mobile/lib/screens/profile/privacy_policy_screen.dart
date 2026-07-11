@@ -92,7 +92,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             const SizedBox(height: 40),
             Center(
               child: Text(
-                'Última actualización: Noviembre 2023',
+                'Última actualización: Julio 2026',
                 style: GoogleFonts.dmSans(
                   color: AppTheme.textMutedColor(context),
                   fontSize: 12,

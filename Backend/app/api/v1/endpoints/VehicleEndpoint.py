@@ -26,13 +26,29 @@ def register_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db), curr
     """
     db_vehicle = VehicleService.get_vehicle_by_placa(db, placa=vehicle.placa)
     if db_vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Este vehículo ya se encuentra registrado en otra cuenta. Si eres el conductor, pídele al propietario que te genere un código de invitación."
-        )
-    
+        from app.models.VehicleUserEntity import VehicleUser
+        owner = db.query(VehicleUser).filter(
+            VehicleUser.id_vehiculo == db_vehicle.id_vehiculo,
+            VehicleUser.rol_vehiculo == "Propietario"
+        ).first()
+        if owner:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Este vehículo ya se encuentra registrado en otra cuenta. Si eres el conductor, pídele al propietario que te genere un código de invitación."
+            )
+        else:
+            # Vehículo sin propietario (posiblemente porque el dueño anterior fue eliminado)
+            vehicle_user = VehicleUser(
+                id_usuario=current_user.id_usuario,
+                id_vehiculo=db_vehicle.id_vehiculo,
+                rol_vehiculo="Propietario"
+            )
+            db.add(vehicle_user)
+            db.commit()
+            db.refresh(db_vehicle)
+            return db_vehicle
+            
     return VehicleService.create_vehicle(db=db, vehicle_data=vehicle, user_id=current_user.id_usuario)
-
 
 @router.post("/{placa}/invitations", response_model=InvitationCreateResponse)
 def create_invitation(placa: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -42,14 +58,12 @@ def create_invitation(placa: str, db: Session = Depends(get_db), current_user: U
     """
     return VehicleService.generate_invitation(db=db, placa=placa, user_id=current_user.id_usuario)
 
-
 @router.post("/invitations/redeem", response_model=InvitationRedeemResponse)
 def redeem_invitation(data: InvitationRedeemRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Permite a un usuario (Conductor) unirse a un vehículo ingresando el código secreto de 6 dígitos.
     """
     return VehicleService.redeem_invitation(db=db, codigo_secreto=data.codigo_secreto, user_id=current_user.id_usuario)
-
 
 @router.delete("/{placa}/driver")
 def remove_driver(placa: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -59,7 +73,6 @@ def remove_driver(placa: str, db: Session = Depends(get_db), current_user: User 
     """
     return VehicleService.remove_driver(db=db, placa=placa, user_id=current_user.id_usuario)
 
-
 @router.get("/mine", response_model=List[MyVehicleResponse])
 def my_vehicles(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
@@ -67,14 +80,12 @@ def my_vehicles(db: Session = Depends(get_db), current_user: User = Depends(get_
     """
     return VehicleService.get_my_vehicles(db=db, user_id=current_user.id_usuario)
 
-
 @router.get("/", response_model=List[VehicleResponse])
 def list_vehicles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Endpoint para listar todos los vehículos registrados en el sistema.
     """
     return VehicleService.get_all_vehicles(db=db, skip=skip, limit=limit)
-
 
 @router.get("/{placa}", response_model=VehicleResponse)
 def get_vehicle(placa: str, db: Session = Depends(get_db)):

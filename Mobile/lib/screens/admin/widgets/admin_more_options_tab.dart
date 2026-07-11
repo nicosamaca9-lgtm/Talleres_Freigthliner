@@ -5,6 +5,7 @@ import 'admin_users_tab.dart';
 import 'admin_receipts_tab.dart';
 import 'admin_overview_tab.dart';
 import 'admin_reports_tab.dart';
+import 'admin_comments_tab.dart';
 
 class AdminMoreOptionsTab extends StatefulWidget {
   const AdminMoreOptionsTab({super.key});
@@ -21,6 +22,7 @@ class _AdminMoreOptionsTabState extends State<AdminMoreOptionsTab> {
     const AdminUsersTab(),
     const AdminReceiptsTab(),
     const AdminReportsTab(),
+    const AdminCommentsTab(),
   ];
 
   final List<String> _subTabTitles = [
@@ -28,6 +30,7 @@ class _AdminMoreOptionsTabState extends State<AdminMoreOptionsTab> {
     'Usuarios y Mecánicos',
     'Recibos y Facturación',
     'Historial de Vehículos',
+    'Comentarios',
   ];
 
   @override
@@ -95,6 +98,7 @@ class _AdminMoreOptionsTabState extends State<AdminMoreOptionsTab> {
               _buildMenuCard(context, 1, Icons.people_rounded, 'Usuarios', Colors.purple),
               _buildMenuCard(context, 2, Icons.receipt_long_rounded, 'Recibos', const Color(0xFF06b6d4)),
               _buildMenuCard(context, 3, Icons.history_rounded, 'Historial', AppTheme.amber),
+              _buildMenuCard(context, 4, Icons.forum_rounded, 'Comentarios', Colors.orange),
             ],
           ),
         ],

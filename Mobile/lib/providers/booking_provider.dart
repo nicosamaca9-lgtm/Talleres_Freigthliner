@@ -28,7 +28,8 @@ class BookingProvider extends ChangeNotifier {
         _repository.getActiveOrdersByUser(idUsuario),
       ]);
       
-      _myBookings = futures[0] as List<BookingModel>;
+      final allBookings = futures[0] as List<BookingModel>;
+      _myBookings = allBookings.where((b) => !b.estadoConfirmacion.contains('CANCELADO')).toList();
       
       final activeOrdersRaw = futures[1] as List<dynamic>;
       _myActiveOrders = activeOrdersRaw

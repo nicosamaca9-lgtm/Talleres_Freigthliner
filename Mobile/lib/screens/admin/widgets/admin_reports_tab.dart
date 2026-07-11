@@ -230,7 +230,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.picture_as_pdf),
                                   label: const Text('Descargar Orden (PDF)'),
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
                                   onPressed: () {
                                     final orderModel = ServiceOrderModel.fromJson(order);
                                     PdfGenerator.generateServiceOrderPdf(orderModel, null);

@@ -19,11 +19,9 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
   final _clienteNombreCtrl = TextEditingController();
   final _clienteNitCtrl = TextEditingController();
   final _clienteTelefonoCtrl = TextEditingController();
-  final _clienteDireccionCtrl = TextEditingController();
-  final _clienteCiudadCtrl = TextEditingController(text: 'DUITAMA');
   final _vendedorCtrl = TextEditingController();
   final _placaCtrl = TextEditingController();
-  final _formaPagoCtrl = TextEditingController();
+  String _formaPago = 'Efectivo';
   final _conceptoCtrl = TextEditingController(text: 'TRABAJO REALIZADO');
   final _notaPieCtrl = TextEditingController(text: 'COTIZACION VALIDA POR 15 DIAS');
 
@@ -38,11 +36,9 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
       _clienteNombreCtrl.text = r['cliente_nombre'] ?? '';
       _clienteNitCtrl.text = r['cliente_nit'] ?? '';
       _clienteTelefonoCtrl.text = r['cliente_telefono'] ?? '';
-      _clienteDireccionCtrl.text = r['cliente_direccion'] ?? '';
-      _clienteCiudadCtrl.text = r['cliente_ciudad'] ?? 'DUITAMA';
       _vendedorCtrl.text = r['vendedor'] ?? '';
       _placaCtrl.text = r['placa'] ?? '';
-      _formaPagoCtrl.text = r['forma_pago'] ?? '';
+      _formaPago = r['forma_pago'] ?? 'Efectivo';
       _conceptoCtrl.text = r['concepto'] ?? 'TRABAJO REALIZADO';
       _notaPieCtrl.text = r['nota_pie'] ?? 'COTIZACION VALIDA POR 15 DIAS';
 
@@ -81,8 +77,8 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
         if (vehicleData['propietario_nombre'] != null) {
           _clienteNombreCtrl.text = vehicleData['propietario_nombre'];
         }
-        if (vehicleData['propietario_identificacion'] != null) {
-          _clienteNitCtrl.text = vehicleData['propietario_identificacion'];
+        if (vehicleData['propietario_cedula'] != null) {
+          _clienteNitCtrl.text = vehicleData['propietario_cedula'];
         }
         if (vehicleData['propietario_telefono'] != null) {
           _clienteTelefonoCtrl.text = vehicleData['propietario_telefono'];
@@ -104,7 +100,7 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
         title: Text(widget.receipt == null ? 'Nuevo Documento' : 'Editar Documento'),
         actions: [
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 16)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, padding: const EdgeInsets.symmetric(horizontal: 16)),
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 final data = {
@@ -112,11 +108,11 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                   'cliente_nombre': _clienteNombreCtrl.text,
                   'cliente_nit': _clienteNitCtrl.text,
                   'cliente_telefono': _clienteTelefonoCtrl.text,
-                  'cliente_direccion': _clienteDireccionCtrl.text,
-                  'cliente_ciudad': _clienteCiudadCtrl.text,
+                  'cliente_direccion': 'AUTOPISTA HIGUERAS',
+                  'cliente_ciudad': 'DUITAMA, BOYACA',
                   'vendedor': _vendedorCtrl.text,
                   'placa': _placaCtrl.text,
-                  'forma_pago': _formaPagoCtrl.text,
+                  'forma_pago': _formaPago,
                   'concepto': _conceptoCtrl.text,
                   'nota_pie': _notaPieCtrl.text,
                   'items': _items,
@@ -135,8 +131,8 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                 }
               }
             },
-            icon: Icon(Icons.save, color: AppTheme.textColor(context)),
-            label: Text('Guardar', style: TextStyle(color: AppTheme.textColor(context))),
+            icon: const Icon(Icons.save, color: Colors.black),
+            label: const Text('Guardar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 16),
         ],
@@ -162,6 +158,7 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                           Expanded(
                             child: DropdownButtonFormField<String>(
                               value: _tipoDocumento,
+                              style: TextStyle(color: AppTheme.textColor(context)),
                               items: ['RECIBO', 'COTIZACION'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: AppTheme.textColor(context))))).toList(),
                               onChanged: (val) => setState(() => _tipoDocumento = val!),
                               dropdownColor: AppTheme.inputColor(context),
@@ -198,17 +195,24 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField(_clienteDireccionCtrl, 'Dirección')),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildTextField(_clienteCiudadCtrl, 'Ciudad')),
-                          const SizedBox(width: 16),
                           Expanded(child: _buildTextField(_vendedorCtrl, 'Vendedor')),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: _buildTextField(_formaPagoCtrl, 'Forma de Pago')),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _formaPago.isNotEmpty && ['Efectivo', 'Transferencia'].contains(_formaPago) ? _formaPago : 'Efectivo',
+                              style: TextStyle(color: AppTheme.textColor(context)),
+                              items: ['Efectivo', 'Transferencia'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: AppTheme.textColor(context))))).toList(),
+                              onChanged: (val) => setState(() => _formaPago = val!),
+                              dropdownColor: AppTheme.inputColor(context),
+                              decoration: InputDecoration(
+                                labelText: 'Forma de Pago', 
+                                labelStyle: TextStyle(color: AppTheme.textMutedColor(context)),
+                                filled: true,
+                                fillColor: AppTheme.inputColor(context),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 16),
                           Expanded(flex: 2, child: _buildTextField(_conceptoCtrl, 'Por Concepto De')),
                         ],

@@ -128,7 +128,7 @@ class PdfGenerator {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('TF CENTRO AUTOMOTRIZ', style: pw.TextStyle(color: PdfColors.green800, fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('TF CENTRO AUTOMOTRIZ', style: pw.TextStyle(color: PdfColors.black, fontSize: 24, fontWeight: pw.FontWeight.bold)),
                     pw.Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                   ],
                 ),

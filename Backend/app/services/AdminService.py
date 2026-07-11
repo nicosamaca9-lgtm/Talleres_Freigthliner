@@ -48,7 +48,18 @@ class AdminService:
                     b.motivo_rechazo = "Cancelada automáticamente por el sistema al no registrar ingreso al taller."
                     db.commit()
                     
-        return bookings
+        # Filtrar citas canceladas si son de días anteriores o después de las 20:00
+        filtered_bookings = []
+        from datetime import time
+        for b in bookings:
+            if b.estado_confirmacion in [ConfirmationState.CANCELADO, ConfirmationState.CANCELADO_POR_SISTEMA]:
+                if b.fecha_cita < now.date():
+                    continue
+                if b.fecha_cita == now.date() and now.time() >= time(20, 0):
+                    continue
+            filtered_bookings.append(b)
+            
+        return filtered_bookings
 
     @staticmethod
     def get_pending_reports(db: Session):
@@ -264,9 +275,30 @@ class AdminService:
 
     @staticmethod
     def delete_user(db: Session, id_usuario: int):
+        from app.core.Enum import UserRole
+        from app.models.BookingEntity import Booking
+        
         user = db.query(User).filter(User.id_usuario == id_usuario).first()
         if not user:
             raise ValueError("Usuario no encontrado")
+            
+        # Lógica de eliminación según el rol
+        if user.rol == UserRole.mechanic: # o "Tecnico" si el enum es así
+            orders = db.query(ServiceOrder).filter(ServiceOrder.id_mecanico == user.id_usuario).all()
+            for order in orders:
+                order.id_mecanico = None
+                if order.estado_orden != ServiceOrderState.ENTREGADO and order.estado_orden != ServiceOrderState.LISTO_PARA_ENTREGA:
+                    order.estado_orden = ServiceOrderState.EN_DIAGNOSTICO
+            db.commit()
+            
+        elif user.rol == UserRole.client:
+            # Eliminar agendamientos para evitar errores de Foreign Key
+            bookings = db.query(Booking).filter(Booking.id_usuario == user.id_usuario).all()
+            for booking in bookings:
+                db.delete(booking)
+            db.commit()
+            # Vehiculos y VehicleUser (owner link) se manejan por cascade_delete en la BD
+            
         db.delete(user)
         db.commit()
         return True
@@ -292,7 +324,10 @@ class AdminService:
             raise ValueError("Vehículo no encontrado")
             
         orders = db.query(ServiceOrder).filter(ServiceOrder.id_vehiculo == vehicle.id_vehiculo).all()
+        receipts = db.query(Receipt).filter(Receipt.placa == placa).all()
+        
         return {
             "vehiculo": vehicle,
-            "ordenes": orders
+            "ordenes": orders,
+            "recibos": receipts
         }

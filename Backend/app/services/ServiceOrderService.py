@@ -92,6 +92,9 @@ class ServiceOrderService:
                     status_code=400, 
                     detail="No puedes entregar el vehículo hasta que el mecánico redacte el informe técnico."
                 )
+            # APROBAR EL INFORME AUTOMÁTICAMENTE
+            if informe_tecnico.estado_revision == "PENDIENTE":
+                informe_tecnico.estado_revision = "APROBADO"
 
         # Si cambia a ENTREGADO y no se proveyó fecha_salida, la llenamos automático
         if nuevo_estado == ServiceOrderState.ENTREGADO:
