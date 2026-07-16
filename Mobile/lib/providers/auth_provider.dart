@@ -33,6 +33,10 @@ class AuthProvider extends ChangeNotifier {
     final r = _role?.trim().toLowerCase();
     return r == 'mechanic' || r == 'mecanico' || r == 'mecánico' || r == 'tecnico' || r == 'técnico';
   }
+  bool get isSecretary {
+    final r = _role?.trim().toLowerCase();
+    return r == 'secretary' || r == 'secretario' || r == 'secretaria';
+  }
   String get initials {
     if (_userName != null && _userLastName != null && _userName!.isNotEmpty && _userLastName!.isNotEmpty) {
       return '${_userName![0].toUpperCase()}${_userLastName![0].toUpperCase()}';

@@ -38,6 +38,11 @@ def register_mechanic(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al crear usuario: {str(e)}",
+        )
 
 from app.services.AdminService import AdminService
 from app.schemas.BookingSchema import BookingResponse, BookingReject
@@ -105,7 +110,7 @@ def review_report(
 def create_receipt(
     data: ReceiptCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     try:
         return AdminService.create_receipt(db, data)
@@ -153,10 +158,21 @@ def delete_user(
 def get_vehicle_history(
     placa: str,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     try:
-        return AdminService.get_vehicle_history(db, placa)
+        from fastapi.encoders import jsonable_encoder
+        from app.schemas.VehicleSchema import VehicleResponse
+        from app.schemas.ServiceOrderSchema import ServiceOrderResponse
+        history = AdminService.get_vehicle_history(db, placa)
+        vehiculo = history["vehiculo"]
+        ordenes = history["ordenes"]
+        recibos = history["recibos"]
+        return {
+            "vehiculo": jsonable_encoder(VehicleResponse.model_validate(vehiculo)),
+            "ordenes": jsonable_encoder([ServiceOrderResponse.model_validate(o) for o in ordenes]),
+            "recibos": jsonable_encoder([ReceiptResponse.model_validate(r) for r in recibos]),
+        }
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -165,7 +181,7 @@ from app.schemas.ReceiptSchema import ReceiptUpdate
 @router.get("/receipts", response_model=List[ReceiptResponse])
 def get_all_receipts(
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     return AdminService.get_all_receipts(db)
 
@@ -173,7 +189,7 @@ def get_all_receipts(
 def get_receipts_by_placa(
     placa: str,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     return AdminService.get_receipts_by_placa(db, placa)
 
@@ -182,7 +198,7 @@ def update_receipt(
     id_recibo: int,
     data: ReceiptUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     try:
         return AdminService.update_receipt(db, id_recibo, data)
@@ -205,7 +221,7 @@ def delete_receipt(
 def finalize_receipt(
     id_recibo: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_roles(UserRole.admin.value))
+    current_user = Depends(require_roles(UserRole.admin.value, UserRole.secretary.value))
 ):
     try:
         return AdminService.finalize_receipt(db, id_recibo)

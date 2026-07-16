@@ -9,7 +9,7 @@ from app.core.Enum import UserRole
 class MechanicRegister(BaseModel):
     nombre: str
     apellido: str
-    telefono: str = Field(min_length=10, max_length=10)
+    telefono: str = Field(min_length=7, max_length=15)
     cedula: str
     correo: EmailStr
     password: str

@@ -245,21 +245,25 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        Expanded(flex: 3, child: _buildItemField(item, 'descripcion', 'Descripción', TextInputType.text, idx)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildItemField(item, 'cantidad', 'Cant.', TextInputType.number, idx)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildItemField(item, 'valor_unitario', 'Valor Unt.', TextInputType.number, idx)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildItemField(item, 'porcentaje_iva', 'IVA %', TextInputType.number, idx)),
-                        const SizedBox(width: 12),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent, size: 28),
-                          onPressed: () => setState(() => _items.removeAt(idx)),
-                        )
-                      ],
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 250, child: _buildItemField(item, 'descripcion', 'Descripción', TextInputType.text, idx)),
+                          const SizedBox(width: 12),
+                          SizedBox(width: 80, child: _buildItemField(item, 'cantidad', 'Cant.', TextInputType.number, idx)),
+                          const SizedBox(width: 12),
+                          SizedBox(width: 120, child: _buildItemField(item, 'valor_unitario', 'Valor Unt.', TextInputType.number, idx)),
+                          const SizedBox(width: 12),
+                          SizedBox(width: 80, child: _buildItemField(item, 'porcentaje_iva', 'IVA %', TextInputType.number, idx)),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.redAccent, size: 28),
+                            onPressed: () => setState(() => _items.removeAt(idx)),
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 );

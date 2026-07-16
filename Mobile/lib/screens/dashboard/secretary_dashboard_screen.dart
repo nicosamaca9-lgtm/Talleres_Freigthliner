@@ -1,54 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/dashboard_header.dart';
-import '../mechanic/widgets/assigned_orders_tab.dart';
-import '../mechanic/widgets/completed_history_tab.dart';
-import '../chat/chat_screen.dart';
+import '../admin/widgets/admin_orders_tab.dart';
+import '../admin/widgets/admin_reports_tab.dart';
+import '../admin/widgets/admin_receipts_tab.dart';
 
-import 'package:screen_protector/screen_protector.dart';
-
-class MechanicDashboardScreen extends StatefulWidget {
-  const MechanicDashboardScreen({super.key});
+class SecretaryDashboardScreen extends StatefulWidget {
+  const SecretaryDashboardScreen({super.key});
 
   @override
-  State<MechanicDashboardScreen> createState() => _MechanicDashboardScreenState();
+  State<SecretaryDashboardScreen> createState() => _SecretaryDashboardScreenState();
 }
-class _MechanicDashboardScreenState extends State<MechanicDashboardScreen> {
+
+class _SecretaryDashboardScreenState extends State<SecretaryDashboardScreen> {
   int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _blockScreenshots();
-  }
-
-  Future<void> _blockScreenshots() async {
-    try {
-      await ScreenProtector.preventScreenshotOn();
-    } catch (e) {
-      debugPrint('No se pudo bloquear capturas: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    ScreenProtector.preventScreenshotOff();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const AssignedOrdersTab(),
-      const CompletedHistoryTab(),
-      const ChatScreen(contactId: 'admin', contactName: 'Soporte Técnico'),
+      const AdminOrdersTab(),
+      const AdminReportsTab(),
+      const AdminReceiptsTab(),
     ];
-    
+
     final initials = context.watch<AuthProvider>().initials;
 
     return Scaffold(
@@ -57,28 +35,19 @@ class _MechanicDashboardScreenState extends State<MechanicDashboardScreen> {
         child: Column(
           children: [
             DashboardHeader(
-              role: 'Técnico',
+              role: 'Secretario',
               avatarText: initials,
             ),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-                layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                  return Stack(
-                    alignment: Alignment.topCenter,
-                    children: <Widget>[
-                      ...previousChildren,
-                      if (currentChild != null) currentChild,
-                    ],
-                  );
-                },
                 child: pages[_currentIndex],
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _MechanicBottomNav(
+      bottomNavigationBar: _SecretaryBottomNav(
         currentIndex: _currentIndex,
         onChanged: (index) => setState(() => _currentIndex = index),
       ),
@@ -86,8 +55,8 @@ class _MechanicDashboardScreenState extends State<MechanicDashboardScreen> {
   }
 }
 
-class _MechanicBottomNav extends StatelessWidget {
-  const _MechanicBottomNav({
+class _SecretaryBottomNav extends StatelessWidget {
+  const _SecretaryBottomNav({
     required this.currentIndex,
     required this.onChanged,
   });
@@ -98,17 +67,17 @@ class _MechanicBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      const _MechanicNavItem(
+      const _SecretaryNavItem(
         label: 'Órdenes',
         icon: Icons.build_circle_rounded,
       ),
-      const _MechanicNavItem(
+      const _SecretaryNavItem(
         label: 'Historial',
         icon: Icons.history_rounded,
       ),
-      const _MechanicNavItem(
-        label: 'Chat',
-        icon: Icons.chat_rounded,
+      const _SecretaryNavItem(
+        label: 'Recibos',
+        icon: Icons.receipt_long_rounded,
       ),
     ];
 
@@ -126,9 +95,6 @@ class _MechanicBottomNav extends StatelessWidget {
           children: List.generate(items.length, (index) {
             final selected = currentIndex == index;
             final item = items[index];
-            final activeColor = AppTheme.green;
-            final activeBgColor = AppTheme.green.withValues(alpha: 0.12);
-            final activeBorderColor = AppTheme.green.withValues(alpha: 0.3);
 
             return Expanded(
               child: InkWell(
@@ -139,10 +105,10 @@ class _MechanicBottomNav extends StatelessWidget {
                   height: 58,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: selected ? activeBgColor : Colors.transparent,
+                    color: selected ? AppTheme.greenBg : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: selected ? activeBorderColor : Colors.transparent,
+                      color: selected ? AppTheme.borderGreen : Colors.transparent,
                     ),
                   ),
                   child: Column(
@@ -150,7 +116,7 @@ class _MechanicBottomNav extends StatelessWidget {
                     children: [
                       Icon(
                         item.icon,
-                        color: selected ? activeColor : AppTheme.textMutedColor(context),
+                        color: selected ? AppTheme.green : AppTheme.textMutedColor(context),
                         size: 23,
                       ),
                       const SizedBox(height: 4),
@@ -161,7 +127,7 @@ class _MechanicBottomNav extends StatelessWidget {
                           maxLines: 1,
                           style: GoogleFonts.dmSans(
                             color:
-                                selected ? activeColor : AppTheme.textMutedColor(context),
+                                selected ? AppTheme.green : AppTheme.textMutedColor(context),
                             fontSize: 12,
                             fontWeight:
                                 selected ? FontWeight.w800 : FontWeight.w600,
@@ -180,12 +146,12 @@ class _MechanicBottomNav extends StatelessWidget {
   }
 }
 
-class _MechanicNavItem {
-  const _MechanicNavItem({
+class _SecretaryNavItem {
+  final String label;
+  final IconData icon;
+
+  const _SecretaryNavItem({
     required this.label,
     required this.icon,
   });
-
-  final String label;
-  final IconData icon;
 }

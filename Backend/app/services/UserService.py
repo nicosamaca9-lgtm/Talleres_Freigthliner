@@ -12,9 +12,11 @@ from app.schemas.UserSchema import MechanicRegister
 
 
 def register_mechanic(db: Session, data: MechanicRegister):
-    """Registra un nuevo usuario con rol mecánico."""
-    if not data.especialidad or not data.especialidad.strip():
-        raise ValueError("La especialidad es obligatoria para registrar un mecánico")
+    """Registra un nuevo usuario con rol mecánico o secretario."""
+    # La especialidad solo es obligatoria para mecánicos
+    if data.rol == UserRole.mechanic:
+        if not data.especialidad or not data.especialidad.strip():
+            raise ValueError("La especialidad es obligatoria para registrar un mecánico")
 
     existing_user = get_user_by_unique_fields(
         db, data.correo, data.telefono, getattr(data, "cedula", None)
@@ -38,8 +40,8 @@ def register_mechanic(db: Session, data: MechanicRegister):
         correo=data.correo,
         cedula=data.cedula,
         password_hash=hash_password(data.password),
-        rol=UserRole.mechanic,
-        especialidad=data.especialidad,
+        rol=data.rol,  # Usar el rol enviado en vez de hardcodear mechanic
+        especialidad=data.especialidad if data.rol == UserRole.mechanic else None,
     )
 
     return create_user(db, user)

@@ -137,145 +137,163 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     final vehiculo = history['vehiculo'];
     final List<dynamic> rawOrders = history['ordenes'] ?? [];
     
-    final vehicleReceipts = provider.receipts.where((r) => r['placa'] == vehiculo['placa']).toList();
+    // Usar los recibos que ya devuelve el backend en el historial del vehículo
+    final List<dynamic> vehicleReceipts = history['recibos'] ?? [];
     final formatCurrency = NumberFormat.currency(locale: 'es_CO', symbol: '\$');
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return DefaultTabController(
+      length: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: AppTheme.textColor(context)),
-                onPressed: () => setState(() => _selectedVehicle = null),
-              ),
-              Text(
-                'Placa: ${vehiculo['placa']}',
-                style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Card(
-            color: AppTheme.cardColor(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Datos del Vehículo', style: TextStyle(color: AppTheme.amber, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Marca: ${vehiculo['marca']}', style: TextStyle(color: AppTheme.textColor(context))),
-                  Text('Modelo: ${vehiculo['modelo']}', style: TextStyle(color: AppTheme.textColor(context))),
-                  Text('Tipo: ${vehiculo['tipo_vehiculo']}', style: TextStyle(color: AppTheme.textColor(context))),
-                  if (vehiculo['propietario_nombre'] != null)
-                     Text('Propietario: ${vehiculo['propietario_nombre']}', style: TextStyle(color: AppTheme.textColor(context))),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back, color: AppTheme.textColor(context)),
+                      onPressed: () => setState(() => _selectedVehicle = null),
+                    ),
+                    Text(
+                      'Placa: ${vehiculo['placa']}',
+                      style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  color: AppTheme.cardColor(context),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Datos del Vehículo', style: TextStyle(color: AppTheme.amber, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text('Marca: ${vehiculo['marca']}', style: TextStyle(color: AppTheme.textColor(context))),
+                        Text('Modelo: ${vehiculo['modelo']}', style: TextStyle(color: AppTheme.textColor(context))),
+                        Text('Tipo: ${vehiculo['tipo_vehiculo']}', style: TextStyle(color: AppTheme.textColor(context))),
+                        if (vehiculo['propietario_nombre'] != null)
+                           Text('Propietario: ${vehiculo['propietario_nombre']}', style: TextStyle(color: AppTheme.textColor(context))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text('Órdenes de Servicio', style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Expanded(
-            child: rawOrders.isEmpty
-                ? const Text('Este vehículo no tiene órdenes de servicio.', style: TextStyle(color: Colors.white70))
-                : ListView.builder(
-                    itemCount: rawOrders.length,
-                    itemBuilder: (context, index) {
-                      final order = rawOrders[index];
-                      return Card(
-                        color: AppTheme.cardColor(context),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    order['numero_orden']?.toString() ?? 'Orden #${order['id_orden']}',
-                                    style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    order['estado_orden']?.toString() ?? '',
-                                    style: const TextStyle(color: AppTheme.green, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text('Fecha Ingreso: ${order['fecha_ingreso']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
-                              if (order['fecha_salida'] != null)
-                                Text('Fecha Salida: ${order['fecha_salida']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
-                              const SizedBox(height: 8),
-                              Text('Cliente: ${order['cliente_nombre']} (C.C: ${order['cliente_identificacion']} / Tel: ${order['cliente_telefono']})', style: TextStyle(color: AppTheme.textColor(context))),
-                              const SizedBox(height: 4),
-                              Text('Km Ingreso: ${order['kilometraje_ingreso']} | Combustible: ${order['nivel_combustible']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
-                              const SizedBox(height: 8),
-                              Text('Trabajos: ${order['trabajos_a_realizar']}', style: TextStyle(color: AppTheme.textColor(context))),
-                              if (order['informe_trabajo'] != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text('Informe: ${order['informe_trabajo']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
-                                ),
-                              const SizedBox(height: 12),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.picture_as_pdf),
-                                  label: const Text('Descargar Orden (PDF)'),
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                                  onPressed: () {
-                                    final orderModel = ServiceOrderModel.fromJson(order);
-                                    PdfGenerator.generateServiceOrderPdf(orderModel, null);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          TabBar(
+            labelColor: AppTheme.primaryColor,
+            unselectedLabelColor: AppTheme.textMutedColor(context),
+            indicatorColor: AppTheme.primaryColor,
+            tabs: const [
+              Tab(text: 'Órdenes de Servicio'),
+              Tab(text: 'Recibos'),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text('Recibos y Cotizaciones', style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
           Expanded(
-            child: vehicleReceipts.isEmpty
-                ? const Text('Este vehículo no tiene recibos o cotizaciones.', style: TextStyle(color: Colors.white70))
-                : ListView.builder(
-                    itemCount: vehicleReceipts.length,
-                    itemBuilder: (context, index) {
-                      final receipt = vehicleReceipts[index];
-                      final isFinalizado = receipt['estado'] == 'FINALIZADO';
-                      return Card(
-                        color: AppTheme.cardColor(context),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
-                        child: ListTile(
-                          leading: Icon(isFinalizado ? Icons.check_circle : Icons.edit_document, color: isFinalizado ? Colors.green : Colors.orange),
-                          title: Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold)),
-                          subtitle: Text('Total: ${formatCurrency.format(receipt['total'])}', style: TextStyle(color: AppTheme.textMutedColor(context))),
-                          trailing: isFinalizado 
-                              ? IconButton(
-                                  icon: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
-                                  onPressed: () => PdfGenerator.generateReceiptPdf(receipt),
-                                ) 
-                              : null,
+            child: TabBarView(
+              children: [
+                // Tab 1: Órdenes
+                rawOrders.isEmpty
+                    ? Center(child: Text('Este vehículo no tiene órdenes de servicio.', style: TextStyle(color: AppTheme.textMutedColor(context))))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: rawOrders.length,
+                        itemBuilder: (context, index) {
+                            final order = rawOrders[index];
+                            return Card(
+                              color: AppTheme.cardColor(context),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          order['numero_orden']?.toString() ?? 'Orden #${order['id_orden']}',
+                                          style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          order['estado_orden']?.toString() ?? '',
+                                          style: const TextStyle(color: AppTheme.green, fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Fecha Ingreso: ${order['fecha_ingreso']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
+                                    if (order['fecha_salida'] != null)
+                                      Text('Fecha Salida: ${order['fecha_salida']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
+                                    const SizedBox(height: 8),
+                                    Text('Cliente: ${order['cliente_nombre']} (C.C: ${order['cliente_identificacion']} / Tel: ${order['cliente_telefono']})', style: TextStyle(color: AppTheme.textColor(context))),
+                                    const SizedBox(height: 4),
+                                    Text('Km Ingreso: ${order['kilometraje_ingreso']} | Combustible: ${order['nivel_combustible']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
+                                    const SizedBox(height: 8),
+                                    Text('Trabajos: ${order['trabajos_a_realizar']}', style: TextStyle(color: AppTheme.textColor(context))),
+                                    if (order['informe_trabajo'] != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8.0),
+                                        child: Text('Informe: ${order['informe_trabajo']}', style: TextStyle(color: AppTheme.textMutedColor(context))),
+                                      ),
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: ElevatedButton.icon(
+                                        icon: const Icon(Icons.picture_as_pdf),
+                                        label: const Text('Descargar Orden (PDF)'),
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                                        onPressed: () {
+                                          final orderModel = ServiceOrderModel.fromJson(order);
+                                          PdfGenerator.generateServiceOrderPdf(orderModel, null);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
+                // Tab 2: Recibos
+                vehicleReceipts.isEmpty
+                    ? Center(child: Text('Este vehículo no tiene recibos o cotizaciones.', style: TextStyle(color: AppTheme.textMutedColor(context))))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: vehicleReceipts.length,
+                        itemBuilder: (context, index) {
+                            final receipt = vehicleReceipts[index];
+                            final isFinalizado = receipt['estado'] == 'FINALIZADO';
+                            return Card(
+                              color: AppTheme.cardColor(context),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.borderColor(context))),
+                              child: ListTile(
+                                leading: Icon(isFinalizado ? Icons.check_circle : Icons.edit_document, color: isFinalizado ? Colors.green : Colors.orange),
+                                title: Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold)),
+                                subtitle: Text('Total: ${formatCurrency.format(receipt['total'])}', style: TextStyle(color: AppTheme.textMutedColor(context))),
+                                trailing: isFinalizado 
+                                    ? IconButton(
+                                        icon: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
+                                        onPressed: () => PdfGenerator.generateReceiptPdf(receipt),
+                                      ) 
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+              ],
+            ),
           ),
         ],
       ),
     );
-  }
+}
 }

@@ -11,6 +11,7 @@ import '../screens/profile/personal_data_screen.dart';
 import '../screens/profile/security_password_screen.dart';
 import '../screens/profile/help_center_screen.dart';
 import '../screens/chat/chat_screen.dart';
+import '../screens/dashboard/secretary_dashboard_screen.dart';
 
 GoRouter createAppRouter(AuthProvider authProvider) {
   return GoRouter(
@@ -24,6 +25,7 @@ GoRouter createAppRouter(AuthProvider authProvider) {
       final isClientRoute = location.startsWith('/client');
       final isMechanicRoute = location.startsWith('/mechanic');
       final isAdminRoute = location.startsWith('/admin');
+      final isSecretaryRoute = location.startsWith('/secretary');
       final isProfileRoute = location == '/profile';
 
       if (!authProvider.isAuthenticated && !isAuthRoute) {
@@ -42,10 +44,15 @@ GoRouter createAppRouter(AuthProvider authProvider) {
         return '/login';
       }
 
+      if (isSecretaryRoute && !authProvider.isSecretary) {
+        return '/login';
+      }
+
       if (isAuthRoute) {
         if (authProvider.isAdmin) return '/admin/dashboard';
         if (authProvider.isClient) return '/client/dashboard';
         if (authProvider.isMechanic) return '/mechanic/dashboard';
+        if (authProvider.isSecretary) return '/secretary/dashboard';
       }
 
       return null;
@@ -70,6 +77,10 @@ GoRouter createAppRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/secretary/dashboard',
+        builder: (context, state) => const SecretaryDashboardScreen(),
       ),
       GoRoute(
         path: '/profile',

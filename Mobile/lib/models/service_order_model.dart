@@ -19,6 +19,7 @@ class ServiceOrderModel {
   final String? informeTrabajo;
   final String estadoOrden;
   final String? placaVehiculo;
+  final String? mecanicoNombre;
 
   ServiceOrderModel({
     required this.idOrden,
@@ -41,6 +42,7 @@ class ServiceOrderModel {
     this.informeTrabajo,
     required this.estadoOrden,
     this.placaVehiculo,
+    this.mecanicoNombre,
   });
 
   factory ServiceOrderModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,33 @@ class ServiceOrderModel {
       informeTrabajo: json['informe_trabajo']?.toString(),
       estadoOrden: json['estado_orden']?.toString() ?? 'EN_DIAGNOSTICO',
       placaVehiculo: json['placa_vehiculo']?.toString(),
+      mecanicoNombre: json['mecanico_nombre']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_orden': idOrden,
+      'numero_orden': numeroOrden,
+      'id_vehiculo': idVehiculo,
+      'id_mecanico': idMecanico,
+      'id_agendamiento': idAgendamiento,
+      'fecha_ingreso': fechaIngreso,
+      'hora_ingreso': horaIngreso,
+      'fecha_salida': fechaSalida,
+      'hora_salida': horaSalida,
+      'cliente_nombre': clienteNombre,
+      'cliente_identificacion': clienteIdentificacion,
+      'cliente_telefono': clienteTelefono,
+      'conductor_nombre': conductorNombre,
+      'conductor_telefono': conductorTelefono,
+      'kilometraje_ingreso': kilometrajeIngreso,
+      'nivel_combustible': nivelCombustible,
+      'trabajos_a_realizar': trabajosARealizar,
+      'informe_trabajo': informeTrabajo,
+      'estado_orden': estadoOrden,
+      'placa_vehiculo': placaVehiculo,
+      'mecanico_nombre': mecanicoNombre,
+    };
   }
 }

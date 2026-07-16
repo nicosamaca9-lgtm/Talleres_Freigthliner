@@ -43,6 +43,7 @@ class ServiceOrderUpdate(BaseModel):
 class ServiceOrderResponse(ServiceOrderBase):
     id_orden: int
     placa_vehiculo: Optional[str] = None
+    mecanico_nombre: Optional[str] = None
 
     class Config:
         from_attributes = True

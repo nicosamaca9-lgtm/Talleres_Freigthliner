@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (provider.isAdmin) {
+      if (provider.isAdmin || provider.isSecretary) {
         context.go('/admin/dashboard');
       } else if (provider.isClient) {
         context.go('/client/dashboard');
@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Portal inválido. Tu rol es: "$currentRole". Solo para clientes, mecánicos y administradores.'),
+            content: Text('Portal inválido. Tu rol es: "$currentRole". Solo para personal y clientes.'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),

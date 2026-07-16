@@ -65,7 +65,7 @@ class PdfGenerator {
 
               pw.Text('Informe Técnico (Mecánico)', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.Divider(),
-              pw.Text('Mecánico asignado: ${mechanic?.nombreCompleto ?? "No asignado"}'),
+              pw.Text('Mecánico asignado: ${mechanic?.nombreCompleto ?? order.mecanicoNombre ?? "No asignado"}'),
               pw.SizedBox(height: 10),
               pw.Text(order.informeTrabajo ?? 'Sin informe registrado.'),
               

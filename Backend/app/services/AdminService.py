@@ -48,16 +48,20 @@ class AdminService:
                     b.motivo_rechazo = "Cancelada automáticamente por el sistema al no registrar ingreso al taller."
                     db.commit()
                     
-        # Filtrar citas canceladas si son de días anteriores o después de las 20:00
+        # Eliminar de la base de datos citas canceladas/rechazadas si son de días anteriores o después de las 20:00
         filtered_bookings = []
         from datetime import time
+        deleted_any = False
         for b in bookings:
-            if b.estado_confirmacion in [ConfirmationState.CANCELADO, ConfirmationState.CANCELADO_POR_SISTEMA]:
-                if b.fecha_cita < now.date():
-                    continue
-                if b.fecha_cita == now.date() and now.time() >= time(20, 0):
+            if b.estado_confirmacion in [ConfirmationState.CANCELADO, ConfirmationState.CANCELADO_POR_SISTEMA, ConfirmationState.RECHAZADO]:
+                if b.fecha_cita < now.date() or (b.fecha_cita == now.date() and now.time() >= time(20, 0)):
+                    db.delete(b)
+                    deleted_any = True
                     continue
             filtered_bookings.append(b)
+            
+        if deleted_any:
+            db.commit()
             
         return filtered_bookings
 
@@ -133,7 +137,7 @@ class AdminService:
             cliente_direccion=data.cliente_direccion,
             cliente_ciudad=data.cliente_ciudad,
             vendedor=data.vendedor,
-            placa=data.placa,
+            placa=data.placa.upper() if data.placa else data.placa,
             forma_pago=data.forma_pago,
             concepto=data.concepto,
             nota_pie=data.nota_pie,
@@ -187,6 +191,10 @@ class AdminService:
             
         update_dict = data.model_dump(exclude_unset=True)
         items_data = update_dict.pop("items", None)
+        
+        # Normalizar placa a mayúsculas si se actualiza
+        if "placa" in update_dict and update_dict["placa"]:
+            update_dict["placa"] = update_dict["placa"].upper()
         
         for key, value in update_dict.items():
             setattr(receipt, key, value)
@@ -319,12 +327,14 @@ class AdminService:
 
     @staticmethod
     def get_vehicle_history(db: Session, placa: str):
+        placa = placa.upper()
         vehicle = db.query(Vehicle).filter(Vehicle.placa == placa).first()
         if not vehicle:
             raise ValueError("Vehículo no encontrado")
             
         orders = db.query(ServiceOrder).filter(ServiceOrder.id_vehiculo == vehicle.id_vehiculo).all()
-        receipts = db.query(Receipt).filter(Receipt.placa == placa).all()
+        from sqlalchemy import func as sqlfunc
+        receipts = db.query(Receipt).filter(sqlfunc.upper(Receipt.placa) == placa.upper()).all()
         
         return {
             "vehiculo": vehicle,

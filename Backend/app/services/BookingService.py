@@ -18,19 +18,12 @@ class BookingService:
                 detail="No se pueden agendar más citas para esta fecha. Límite diario alcanzado."
             )
 
-        # Validar max 16 órdenes activas (vehículos en el taller)
-        active_orders_count = db.query(ServiceOrder).filter(ServiceOrder.estado_orden != ServiceOrderState.ENTREGADO).count()
-        if active_orders_count >= 16:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El taller está a su capacidad máxima. No se pueden agendar más citas por el momento."
-            )
 
         # Validar que un mismo vehículo no tenga más de una cita activa el mismo día
         existing_vehicle_booking = db.query(Booking).filter(
             Booking.id_vehiculo == booking_data.id_vehiculo,
             Booking.fecha_cita == booking_data.fecha_cita,
-            Booking.estado_confirmacion != ConfirmationState.CANCELADO
+            Booking.estado_confirmacion.in_([ConfirmationState.PENDIENTE, ConfirmationState.CONFIRMADO])
         ).first()
 
         if existing_vehicle_booking:
@@ -63,6 +56,10 @@ class BookingService:
         bookings = db.query(Booking).options(joinedload(Booking.vehicle), joinedload(Booking.user)).filter(Booking.id_usuario == id_usuario).order_by(Booking.fecha_cita.desc(), Booking.hora_cita.desc()).all()
         now = datetime.now()
         
+        filtered_bookings = []
+        from datetime import time
+        deleted_any = False
+        
         for b in bookings:
             if b.estado_confirmacion in [ConfirmationState.PENDIENTE, ConfirmationState.CONFIRMADO]:
                 is_past_date = b.fecha_cita < now.date()
@@ -71,8 +68,20 @@ class BookingService:
                     b.estado_confirmacion = ConfirmationState.CANCELADO_POR_SISTEMA
                     b.motivo_rechazo = "Cancelada automáticamente por el sistema al no registrar ingreso al taller."
                     db.commit()
-                    
-        return bookings
+            
+            # Borrado real de la base de datos a las 20:00 o días posteriores
+            if b.estado_confirmacion in [ConfirmationState.CANCELADO, ConfirmationState.CANCELADO_POR_SISTEMA, ConfirmationState.RECHAZADO]:
+                if b.fecha_cita < now.date() or (b.fecha_cita == now.date() and now.time() >= time(20, 0)):
+                    db.delete(b)
+                    deleted_any = True
+                    continue
+            
+            filtered_bookings.append(b)
+
+        if deleted_any:
+            db.commit()
+            
+        return filtered_bookings
 
     @staticmethod
     def update_booking(db: Session, id_agendamiento: int, booking_data: BookingUpdate):

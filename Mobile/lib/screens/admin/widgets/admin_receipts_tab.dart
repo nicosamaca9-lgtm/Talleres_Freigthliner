@@ -183,7 +183,7 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
             child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(dialogContext);
               try {
@@ -216,7 +216,7 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
             child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(dialogContext);
               try {

@@ -178,9 +178,12 @@ class _AdminBookingsTabState extends State<AdminBookingsTab> {
             Divider(color: AppTheme.borderColor(context)),
             const SizedBox(height: 8),
             if (booking.estadoConfirmacion == 'PENDIENTE') ...[
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: 140,
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.close_rounded, size: 18),
                       label: const Text('Rechazar'),
@@ -191,8 +194,8 @@ class _AdminBookingsTabState extends State<AdminBookingsTab> {
                       onPressed: () => _showRejectDialog(context, booking.idAgendamiento),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
+                  SizedBox(
+                    width: 140,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.check_rounded, size: 18),
                       label: const Text('Confirmar'),
@@ -275,10 +278,10 @@ class _AdminBookingsTabState extends State<AdminBookingsTab> {
     }
   }
 
-  void _showRejectDialog(BuildContext context, int id) {
+  void _showRejectDialog(BuildContext context, int id) async {
     final TextEditingController reasonController = TextEditingController();
 
-    showDialog(
+    final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor(context),
@@ -309,38 +312,44 @@ class _AdminBookingsTabState extends State<AdminBookingsTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
-            onPressed: () async {
-              final reason = reasonController.text.trim();
-              if (reason.isEmpty) {
+            onPressed: () {
+              final val = reasonController.text.trim();
+              if (val.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Debes proporcionar un motivo')),
                 );
                 return;
               }
-
-              Navigator.pop(dialogContext);
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              try {
-                await context.read<AdminProvider>().rejectBooking(id, reason);
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Cita rechazada exitosamente'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $e'),
-                    backgroundColor: AppTheme.errorColor,
-                  ),
-                );
-              }
+              Navigator.pop(dialogContext, val);
             },
             child: const Text('Rechazar Cita'),
           ),
         ],
       ),
     );
+
+    if (reason != null && context.mounted) {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      try {
+        await context.read<AdminProvider>().rejectBooking(id, reason);
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Cita rechazada exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
   }
 }

@@ -174,25 +174,22 @@ class _AssignedOrderCard extends StatelessWidget {
 
           InfoLine(label: 'Ingreso:', value: '${order.fechaIngreso} ${order.horaIngreso}'),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: ActionButton(
-                  label: 'Redactar Informe',
-                  icon: Icons.note_add_rounded,
-                  isPrimary: true,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => TechnicalReportDialog(
-                        idOrden: order.idOrden,
-                        title: order.numeroOrden.isNotEmpty ? order.numeroOrden : 'ORD-${order.idOrden}',
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: ActionButton(
+              label: 'Redactar Informe',
+              icon: Icons.note_add_rounded,
+              isPrimary: true,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => TechnicalReportDialog(
+                    idOrden: order.idOrden,
+                    title: order.numeroOrden.isNotEmpty ? order.numeroOrden : 'ORD-${order.idOrden}',
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -129,8 +130,22 @@ class _VehicleRegistrationDialogState extends State<VehicleRegistrationDialog> {
                 controller: _placaController,
                 style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
                 decoration: _inputDecoration('Placa'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Requerido' : null,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(6),
+                  TextInputFormatter.withFunction(
+                    (oldValue, newValue) => newValue.copyWith(
+                      text: newValue.text.toUpperCase(),
+                    ),
+                  ),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Requerido';
+                  if (!RegExp(r'^[A-Z]{3}\d{3}$').hasMatch(value)) {
+                    return 'Formato inválido (Ej: ABC123)';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -143,10 +158,23 @@ class _VehicleRegistrationDialogState extends State<VehicleRegistrationDialog> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _modeloController,
+                keyboardType: TextInputType.number,
                 style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
                 decoration: _inputDecoration('Modelo (Año)'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Requerido' : null,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Requerido';
+                  final year = int.tryParse(value);
+                  if (year == null) return 'Año inválido';
+                  final currentYear = DateTime.now().year;
+                  if (year < 1970 || year > (currentYear + 2)) {
+                    return 'Año debe ser entre 1970 y ${currentYear + 2}';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(

@@ -69,12 +69,12 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                     const SizedBox(width: 16),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.person_add, color: Colors.black),
-                      label: const Text('Añadir Mecánico', style: TextStyle(color: Colors.black)),
+                      label: const Text('Añadir Personal', style: TextStyle(color: Colors.black)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       ),
-                      onPressed: () => _showCreateMechanicDialog(context),
+                      onPressed: () => _showCreateStaffDialog(context),
                     ),
                   ],
                 ),
@@ -86,7 +86,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   itemBuilder: (context, index) {
                     final user = filteredUsers[index];
                     final isMechanic = user.rol == 'Tecnico';
-                    final isAdmin = user.rol == 'Admin';
+                    final isAdmin = user.rol == 'Administrador' || user.rol == 'Admin';
+                    final isSecretary = user.rol == 'Secretario';
                     
                     return Card(
                       color: AppTheme.cardColor(context),
@@ -95,9 +96,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                         leading: CircleAvatar(
                           backgroundColor: isAdmin 
                               ? Colors.red 
-                              : isMechanic ? Colors.orange : AppTheme.primaryColor,
+                              : isMechanic ? Colors.orange : isSecretary ? Colors.purple : AppTheme.primaryColor,
                           child: Icon(
-                            isAdmin ? Icons.admin_panel_settings : isMechanic ? Icons.build : Icons.person,
+                            isAdmin ? Icons.admin_panel_settings : isMechanic ? Icons.build : isSecretary ? Icons.badge : Icons.person,
                             color: Colors.white,
                           ),
                         ),
@@ -189,7 +190,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     );
   }
 
-  void _showCreateMechanicDialog(BuildContext context) {
+  void _showCreateStaffDialog(BuildContext context) {
     final nombreCtrl = TextEditingController();
     final apellidoCtrl = TextEditingController();
     final telefonoCtrl = TextEditingController();
@@ -197,60 +198,89 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     final correoCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     final espCtrl = TextEditingController();
+    String selectedRole = 'Tecnico';
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppTheme.cardColor(context),
-        title: Text('Añadir Mecánico', style: TextStyle(color: AppTheme.textColor(context))),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildTextField(context, nombreCtrl, 'Nombre'),
-              const SizedBox(height: 12),
-              _buildTextField(context, apellidoCtrl, 'Apellido'),
-              const SizedBox(height: 12),
-              _buildTextField(context, telefonoCtrl, 'Teléfono'),
-              const SizedBox(height: 12),
-              _buildTextField(context, cedulaCtrl, 'Cédula'),
-              const SizedBox(height: 12),
-              _buildTextField(context, correoCtrl, 'Correo', isEmail: true),
-              const SizedBox(height: 12),
-              _buildTextField(context, passCtrl, 'Contraseña', obscure: true),
-              const SizedBox(height: 12),
-              _buildTextField(context, espCtrl, 'Especialidad (Opcional)'),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setStateSB) {
+          return AlertDialog(
+            backgroundColor: AppTheme.cardColor(context),
+            title: Text('Añadir Personal', style: TextStyle(color: AppTheme.textColor(context))),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(context, nombreCtrl, 'Nombre'),
+                  const SizedBox(height: 12),
+                  _buildTextField(context, apellidoCtrl, 'Apellido'),
+                  const SizedBox(height: 12),
+                  _buildTextField(context, telefonoCtrl, 'Teléfono'),
+                  const SizedBox(height: 12),
+                  _buildTextField(context, cedulaCtrl, 'Cédula'),
+                  const SizedBox(height: 12),
+                  _buildTextField(context, correoCtrl, 'Correo', isEmail: true),
+                  const SizedBox(height: 12),
+                  _buildTextField(context, passCtrl, 'Contraseña', obscure: true),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    dropdownColor: AppTheme.cardColor(context),
+                    style: TextStyle(color: AppTheme.textColor(context)),
+                    decoration: InputDecoration(
+                      labelText: 'Rol',
+                      labelStyle: TextStyle(color: AppTheme.textMutedColor(context)),
+                      filled: true,
+                      fillColor: AppTheme.inputColor(context),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Tecnico', child: Text('Técnico')),
+                      DropdownMenuItem(value: 'Secretario', child: Text('Secretario')),
+                    ],
+                    onChanged: (val) {
+                      setStateSB(() {
+                        selectedRole = val!;
+                      });
+                    },
+                  ),
+                  if (selectedRole == 'Tecnico') ...[
+                    const SizedBox(height: 12),
+                    _buildTextField(context, espCtrl, 'Especialidad (Opcional)'),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                onPressed: () async {
+                  try {
+                    await context.read<AdminProvider>().createMechanic({
+                      'nombre': nombreCtrl.text,
+                      'apellido': apellidoCtrl.text,
+                      'telefono': telefonoCtrl.text,
+                      'cedula': cedulaCtrl.text,
+                      'correo': correoCtrl.text,
+                      'password': passCtrl.text,
+                      'rol': selectedRole,
+                      'especialidad': selectedRole == 'Tecnico' && espCtrl.text.isNotEmpty ? espCtrl.text : null,
+                    });
+                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$selectedRole creado exitosamente'), backgroundColor: Colors.green));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorColor));
+                  }
+                },
+                child: const Text('Crear', style: TextStyle(color: Colors.black)),
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            onPressed: () async {
-              try {
-                await context.read<AdminProvider>().createMechanic({
-                  'nombre': nombreCtrl.text,
-                  'apellido': apellidoCtrl.text,
-                  'telefono': telefonoCtrl.text,
-                  'cedula': cedulaCtrl.text,
-                  'correo': correoCtrl.text,
-                  'password': passCtrl.text,
-                  'rol': 'Tecnico',
-                  'especialidad': espCtrl.text.isNotEmpty ? espCtrl.text : null,
-                });
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mecánico creado'), backgroundColor: Colors.green));
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorColor));
-              }
-            },
-            child: const Text('Crear', style: TextStyle(color: Colors.black)),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

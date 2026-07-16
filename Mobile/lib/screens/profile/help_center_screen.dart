@@ -73,19 +73,19 @@ class HelpCenterScreen extends StatelessWidget {
                   _ContactItem(
                     icon: Icons.phone_rounded,
                     title: 'Teléfono',
-                    subtitle: '+57 300 000 0000',
+                    subtitle: '+57 3204472578',
                   ),
                   const Divider(height: 32),
                   _ContactItem(
                     icon: Icons.email_rounded,
                     title: 'Correo Electrónico',
-                    subtitle: 'soporte@tfcentro.com',
+                    subtitle: 'tfcentroautomotriz@gmail.com',
                   ),
                   const Divider(height: 32),
                   _ContactItem(
                     icon: Icons.location_on_rounded,
                     title: 'Ubicación',
-                    subtitle: 'Calle Falsa 123, Ciudad',
+                    subtitle: ' TF Centro Automotriz Autopista Higueras , Duitama Boyacá',
                   ),
                 ],
               ),

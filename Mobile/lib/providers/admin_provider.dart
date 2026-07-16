@@ -93,6 +93,10 @@ class AdminProvider with ChangeNotifier {
           estadoConfirmacion: 'CONFIRMADO',
           observaciones: current.observaciones,
           motivoRechazo: current.motivoRechazo,
+          clienteNombre: current.clienteNombre,
+          clienteTelefono: current.clienteTelefono,
+          clienteCedula: current.clienteCedula,
+          placaVehiculo: current.placaVehiculo,
         );
       }
       fetchStats();
@@ -122,6 +126,10 @@ class AdminProvider with ChangeNotifier {
           estadoConfirmacion: 'RECHAZADO',
           observaciones: current.observaciones,
           motivoRechazo: motivoRechazo,
+          clienteNombre: current.clienteNombre,
+          clienteTelefono: current.clienteTelefono,
+          clienteCedula: current.clienteCedula,
+          placaVehiculo: current.placaVehiculo,
         );
       }
       fetchStats();
