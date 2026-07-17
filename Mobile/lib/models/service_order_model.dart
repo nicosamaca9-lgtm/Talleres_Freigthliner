@@ -19,6 +19,7 @@ class ServiceOrderModel {
   final String? informeTrabajo;
   final String estadoOrden;
   final String? placaVehiculo;
+  final String? marcaVehiculo;
   final String? mecanicoNombre;
 
   ServiceOrderModel({
@@ -42,6 +43,7 @@ class ServiceOrderModel {
     this.informeTrabajo,
     required this.estadoOrden,
     this.placaVehiculo,
+    this.marcaVehiculo,
     this.mecanicoNombre,
   });
 
@@ -67,6 +69,7 @@ class ServiceOrderModel {
       informeTrabajo: json['informe_trabajo']?.toString(),
       estadoOrden: json['estado_orden']?.toString() ?? 'EN_DIAGNOSTICO',
       placaVehiculo: json['placa_vehiculo']?.toString(),
+      marcaVehiculo: json['marca_vehiculo']?.toString(),
       mecanicoNombre: json['mecanico_nombre']?.toString(),
     );
   }
@@ -93,6 +96,7 @@ class ServiceOrderModel {
       'informe_trabajo': informeTrabajo,
       'estado_orden': estadoOrden,
       'placa_vehiculo': placaVehiculo,
+      'marca_vehiculo': marcaVehiculo,
       'mecanico_nombre': mecanicoNombre,
     };
   }

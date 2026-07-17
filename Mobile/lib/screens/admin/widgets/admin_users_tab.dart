@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/admin_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
+import 'package:flutter/services.dart';
 
 class AdminUsersTab extends StatefulWidget {
   const AdminUsersTab({super.key});
@@ -156,9 +157,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               const SizedBox(height: 12),
               _buildTextField(context, apellidoCtrl, 'Apellido'),
               const SizedBox(height: 12),
-              _buildTextField(context, telefonoCtrl, 'Teléfono'),
+              _buildTextField(context, telefonoCtrl, 'Teléfono', isNumeric: true, maxLength: 10),
               const SizedBox(height: 12),
-              _buildTextField(context, cedulaCtrl, 'Cédula'),
+              _buildTextField(context, cedulaCtrl, 'Cédula', isNumeric: true),
             ],
           ),
         ),
@@ -170,6 +171,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             onPressed: () async {
+              if (telefonoCtrl.text.length != 10) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('El teléfono debe tener exactamente 10 dígitos'), backgroundColor: AppTheme.errorColor));
+                return;
+              }
               try {
                 await context.read<AdminProvider>().updateUser(user.idUsuario, {
                   'nombre': nombreCtrl.text,
@@ -215,9 +220,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   const SizedBox(height: 12),
                   _buildTextField(context, apellidoCtrl, 'Apellido'),
                   const SizedBox(height: 12),
-                  _buildTextField(context, telefonoCtrl, 'Teléfono'),
+                  _buildTextField(context, telefonoCtrl, 'Teléfono', isNumeric: true, maxLength: 10),
                   const SizedBox(height: 12),
-                  _buildTextField(context, cedulaCtrl, 'Cédula'),
+                  _buildTextField(context, cedulaCtrl, 'Cédula', isNumeric: true),
                   const SizedBox(height: 12),
                   _buildTextField(context, correoCtrl, 'Correo', isEmail: true),
                   const SizedBox(height: 12),
@@ -259,6 +264,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                 onPressed: () async {
+                  if (telefonoCtrl.text.length != 10) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('El teléfono debe tener exactamente 10 dígitos'), backgroundColor: AppTheme.errorColor));
+                    return;
+                  }
                   try {
                     await context.read<AdminProvider>().createMechanic({
                       'nombre': nombreCtrl.text,
@@ -285,14 +294,17 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     );
   }
 
-  Widget _buildTextField(BuildContext context, TextEditingController controller, String label, {bool obscure = false, bool isEmail = false}) {
+  Widget _buildTextField(BuildContext context, TextEditingController controller, String label, {bool obscure = false, bool isEmail = false, bool isNumeric = false, int? maxLength}) {
     return TextField(
       controller: controller,
       obscureText: obscure,
-      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
+      maxLength: maxLength,
+      keyboardType: isNumeric ? TextInputType.number : (isEmail ? TextInputType.emailAddress : TextInputType.text),
+      inputFormatters: isNumeric ? [FilteringTextInputFormatter.digitsOnly] : null,
       style: TextStyle(color: AppTheme.textColor(context)),
       decoration: InputDecoration(
         labelText: label,
+        counterText: '',
         labelStyle: TextStyle(color: AppTheme.textMutedColor(context)),
         filled: true,
         fillColor: AppTheme.inputColor(context),

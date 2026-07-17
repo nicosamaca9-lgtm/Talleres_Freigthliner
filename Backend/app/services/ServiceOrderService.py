@@ -26,9 +26,10 @@ class ServiceOrderService:
             
             if not vehicle:
                 # Crear vehículo con datos mínimos
+                marca = order_data.marca_vehiculo_nuevo.strip() if order_data.marca_vehiculo_nuevo else "Sin Registrar"
                 vehicle = Vehicle(
                     placa=placa,
-                    marca="Sin Registrar",
+                    marca=marca,
                     modelo="Sin Registrar",
                     tipo_vehiculo=TipoVehiculoEnum.otro,
                 )
@@ -47,7 +48,7 @@ class ServiceOrderService:
         next_id = 1 if not last_order else last_order.id_orden + 1
         numero_orden = f"ORD-{next_id:04d}"
         
-        order_dict = order_data.model_dump(exclude={'placa_vehiculo_nuevo'})
+        order_dict = order_data.model_dump(exclude={'placa_vehiculo_nuevo', 'marca_vehiculo_nuevo'})
         order_dict['numero_orden'] = numero_orden
         order_dict['id_vehiculo'] = id_vehiculo  # Asegurar que siempre sea el correcto
             

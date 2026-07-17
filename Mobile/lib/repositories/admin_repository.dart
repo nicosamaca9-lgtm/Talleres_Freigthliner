@@ -216,7 +216,12 @@ class AdminRepository {
 
   Exception _handleError(dynamic e, String defaultMessage) {
     if (e is DioException) {
-      return Exception(e.response?.data['detail'] ?? defaultMessage);
+      if (e.response?.data is Map<String, dynamic>) {
+        return Exception(e.response?.data['detail'] ?? defaultMessage);
+      } else if (e.response?.data is String) {
+        return Exception('${e.response?.statusCode}: ${e.response?.data}');
+      }
+      return Exception(defaultMessage);
     }
     return Exception(defaultMessage);
   }

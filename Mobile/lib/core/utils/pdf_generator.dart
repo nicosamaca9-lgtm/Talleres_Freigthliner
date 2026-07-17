@@ -49,7 +49,7 @@ class PdfGenerator {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Vehículo ID: ${order.idVehiculo}'),
+                  pw.Text('Placa: ${order.placaVehiculo ?? "N/A"} - Marca: ${order.marcaVehiculo ?? "N/A"}'),
                   pw.Text('Kilometraje: ${order.kilometrajeIngreso} km'),
                   pw.Text('Combustible: ${order.nivelCombustible}'),
                 ]

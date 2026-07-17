@@ -32,6 +32,7 @@ class ServiceOrderBase(BaseModel):
 class ServiceOrderCreate(ServiceOrderBase):
     id_vehiculo: Optional[int] = Field(None, description="ID del vehículo (si ya está registrado)")
     placa_vehiculo_nuevo: Optional[str] = Field(None, description="Placa del vehículo a crear si no está registrado")
+    marca_vehiculo_nuevo: Optional[str] = Field(None, description="Marca del vehículo a crear si no está registrado")
 
 class ServiceOrderUpdate(BaseModel):
     id_mecanico: Optional[int] = None
@@ -43,6 +44,7 @@ class ServiceOrderUpdate(BaseModel):
 class ServiceOrderResponse(ServiceOrderBase):
     id_orden: int
     placa_vehiculo: Optional[str] = None
+    marca_vehiculo: Optional[str] = None
     mecanico_nombre: Optional[str] = None
 
     class Config:

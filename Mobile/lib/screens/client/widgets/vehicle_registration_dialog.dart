@@ -41,11 +41,33 @@ class _VehicleRegistrationDialogState extends State<VehicleRegistrationDialog> {
     if (_formKey.currentState!.validate() && _selectedTipoVehiculo != null) {
       final provider = Provider.of<VehicleProvider>(context, listen: false);
       final data = {
-        'placa': _placaController.text.trim(),
+        'placa': _placaController.text.trim().toUpperCase(),
         'marca': _marcaController.text.trim(),
         'modelo': _modeloController.text.trim(),
         'tipo_vehiculo': _selectedTipoVehiculo,
       };
+
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.cardColor(context),
+          title: Text('Confirmar', style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontWeight: FontWeight.bold, fontSize: 20)),
+          content: Text('¿Estás seguro de registrar el vehículo con la placa ${data['placa']}?', style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context), fontSize: 15)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Cancelar', style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.green),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Confirmar', style: GoogleFonts.dmSans(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
 
       try {
         await provider.registerVehicle(data);

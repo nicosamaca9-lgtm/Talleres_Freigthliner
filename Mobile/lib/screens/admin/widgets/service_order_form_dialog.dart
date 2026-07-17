@@ -24,6 +24,7 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
   List<BookingModel> _confirmedBookings = [];
 
   final _placaController = TextEditingController();
+  final _marcaController = TextEditingController();
   int? _foundVehicleId;
   bool _vehicleNotFound = false;
 
@@ -84,6 +85,7 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
   @override
   void dispose() {
     _placaController.dispose();
+    _marcaController.dispose();
     _clienteNombreController.dispose();
     _clienteDocController.dispose();
     _clienteTelController.dispose();
@@ -162,7 +164,10 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
       final data = {
         // Si el vehículo fue encontrado, enviamos el id; si no, enviamos la placa para que el backend lo cree
         if (_foundVehicleId != null) 'id_vehiculo': _foundVehicleId
-        else 'placa_vehiculo_nuevo': placa,
+        else ...{
+          'placa_vehiculo_nuevo': placa,
+          if (_marcaController.text.trim().isNotEmpty) 'marca_vehiculo_nuevo': _marcaController.text.trim(),
+        },
         'id_agendamiento': _hasBooking && _selectedBooking != null ? _selectedBooking!.idAgendamiento : null,
         'fecha_ingreso': DateFormat('yyyy-MM-dd').format(now),
         'hora_ingreso': DateFormat('HH:mm:ss').format(now),
@@ -257,11 +262,19 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                           padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
                           child: Text('✅ Vehículo registrado. Datos del propietario cargados.', style: const TextStyle(color: AppTheme.green, fontSize: 12)),
                         ),
-                      if (_vehicleNotFound)
+                      if (_vehicleNotFound) ...[
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
                           child: Text('⚠️ Vehículo no registrado. Completa los datos del cliente manualmente.', style: TextStyle(color: Colors.orange.shade300, fontSize: 12)),
                         ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: _marcaController,
+                          label: 'Marca del Vehículo',
+                          icon: Icons.directions_car,
+                          validator: (v) => v == null || v.isEmpty ? 'Requerido para vehículos nuevos' : null,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       SwitchListTile(
                         title: Text('¿Vincular con cita agendada?', style: GoogleFonts.dmSans(color: AppTheme.textColor(context), fontWeight: FontWeight.bold)),

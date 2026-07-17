@@ -53,6 +53,10 @@ class ServiceOrder(Base):
         return self.vehiculo.placa if self.vehiculo else None
 
     @property
+    def marca_vehiculo(self) -> str:
+        return self.vehiculo.marca if self.vehiculo else None
+
+    @property
     def mecanico_nombre(self) -> str:
         if self.mecanico:
             return f"{self.mecanico.nombre} {self.mecanico.apellido}"
