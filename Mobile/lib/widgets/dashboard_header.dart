@@ -6,7 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 
-class DashboardHeader extends StatelessWidget {
+class DashboardHeader extends StatefulWidget {
   const DashboardHeader({
     super.key,
     required this.role,
@@ -17,12 +17,28 @@ class DashboardHeader extends StatelessWidget {
   final String avatarText;
 
   @override
+  State<DashboardHeader> createState() => _DashboardHeaderState();
+}
+
+class _DashboardHeaderState extends State<DashboardHeader> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ChatProvider>().connect();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       decoration: BoxDecoration(
         color: AppTheme.appBarColor(context),
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor(context), width: 1)),
+        border: Border(
+          bottom: BorderSide(color: AppTheme.borderColor(context), width: 1),
+        ),
       ),
       child: Row(
         children: [
@@ -42,7 +58,7 @@ class DashboardHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'NIT: 7184810 - Portal $role',
+                  'NIT: 7184810 - Portal ${widget.role}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.dmSans(
@@ -90,33 +106,8 @@ class DashboardHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 10),
-          _HeaderAvatar(avatarText: avatarText),
+          _HeaderAvatar(avatarText: widget.avatarText),
         ],
-      ),
-    );
-  }
-}
-
-class _RolePill extends StatelessWidget {
-  const _RolePill({required this.role});
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppTheme.greenBg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.borderGreen),
-      ),
-      child: Text(
-        role,
-        style: GoogleFonts.dmSans(
-          color: AppTheme.green,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }
@@ -186,33 +177,50 @@ class _HeaderAvatar extends StatelessWidget {
       },
       itemBuilder: (context) => [
         PopupMenuItem(
-          value: 'profile', 
+          value: 'profile',
           child: Row(
             children: [
-              Icon(Icons.person_outline_rounded, color: AppTheme.textColor(context), size: 20),
+              Icon(
+                Icons.person_outline_rounded,
+                color: AppTheme.textColor(context),
+                size: 20,
+              ),
               const SizedBox(width: 10),
-              Text('Mi Cuenta', style: GoogleFonts.dmSans(color: AppTheme.textColor(context))),
+              Text(
+                'Mi Cuenta',
+                style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
+              ),
             ],
           ),
         ),
         PopupMenuItem(
-          value: 'privacy', 
+          value: 'privacy',
           child: Row(
             children: [
-              Icon(Icons.privacy_tip_outlined, color: AppTheme.textColor(context), size: 20),
+              Icon(
+                Icons.privacy_tip_outlined,
+                color: AppTheme.textColor(context),
+                size: 20,
+              ),
               const SizedBox(width: 10),
-              Text('Privacidad', style: GoogleFonts.dmSans(color: AppTheme.textColor(context))),
+              Text(
+                'Privacidad',
+                style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
+              ),
             ],
           ),
         ),
         const PopupMenuDivider(),
         PopupMenuItem(
-          value: 'logout', 
+          value: 'logout',
           child: Row(
             children: [
               Icon(Icons.logout_rounded, color: AppTheme.red, size: 20),
               const SizedBox(width: 10),
-              Text('Cerrar sesión', style: GoogleFonts.dmSans(color: AppTheme.red)),
+              Text(
+                'Cerrar sesión',
+                style: GoogleFonts.dmSans(color: AppTheme.red),
+              ),
             ],
           ),
         ),
