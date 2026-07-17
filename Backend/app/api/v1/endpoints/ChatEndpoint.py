@@ -29,6 +29,59 @@ def _serialize_read_receipt(message: Message) -> dict:
     }
 
 
+def _message_status(message: Message) -> str:
+    if message.is_read is True or message.read_at is not None:
+        return "read"
+    if message.delivered_at is not None:
+        return "delivered"
+    return "sent"
+
+
+def _serialize_message_payload(message: Message) -> dict:
+    return {
+        "id": message.id,
+        "sender_id": message.sender_id,
+        "receiver_id": message.receiver_id,
+        "content": message.content,
+        "timestamp": message.timestamp.isoformat() if message.timestamp else None,
+        "is_read": message.is_read,
+        "delivered_at": message.delivered_at.isoformat() if message.delivered_at else None,
+        "read_at": message.read_at.isoformat() if message.read_at else None,
+        "status": _message_status(message),
+    }
+
+
+async def _finalize_delivery_state(message_id: int, delivered: bool) -> dict | None:
+    with SessionLocal() as db:
+        message = db.query(Message).filter(Message.id == message_id).first()
+        if not message:
+            return None
+
+        newly_delivered = False
+        if delivered and message.delivered_at is None:
+            message.delivered_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(message)
+            newly_delivered = True
+
+        payload = _serialize_message_payload(message)
+
+        if newly_delivered:
+            await manager.send_personal_json(
+                {
+                    "type": "message_delivered",
+                    "message_id": message.id,
+                    "receiver_id": message.receiver_id,
+                    "delivered_at": message.delivered_at.isoformat()
+                    if message.delivered_at
+                    else None,
+                },
+                message.sender_id
+            )
+
+        return payload
+
+
 def _process_message_in_db(sender_id: int, sender_role: str, raw_receiver_id: any, content: str) -> dict:
     """
     Ejecuta toda la lógica de base de datos de forma síncrona.
@@ -77,13 +130,7 @@ def _process_message_in_db(sender_id: int, sender_role: str, raw_receiver_id: an
 
         return {
             "ok": True,
-            "payload": {
-                "id": new_message.id,
-                "sender_id": sender_id,
-                "receiver_id": receiver_id,
-                "content": content,
-                "timestamp": new_message.timestamp.isoformat() if new_message.timestamp else None
-            },
+            "payload": _serialize_message_payload(new_message),
             "actual_receiver_id": receiver_id
         }
 
@@ -164,6 +211,10 @@ async def websocket_endpoint(
             actual_receiver_id = result["actual_receiver_id"]
 
             sent_ws = await manager.send_personal_json(msg_payload, actual_receiver_id)
+            delivery_payload = await _finalize_delivery_state(msg_payload["id"], delivered=sent_ws)
+            if delivery_payload is not None:
+                msg_payload = delivery_payload
+
             if not sent_ws:
                 await send_push_notification(actual_receiver_id, content)
 
@@ -171,10 +222,10 @@ async def websocket_endpoint(
             await manager.send_personal_json(msg_payload, sender_id)
 
     except WebSocketDisconnect:
-        manager.disconnect(sender_id)
+        manager.disconnect(sender_id, websocket)
         logger.info(f"User {sender_id} disconnected")
     except Exception as e:
-        manager.disconnect(sender_id)
+        manager.disconnect(sender_id, websocket)
         logger.error(f"WebSocket error for user {sender_id}: {e}")
 
 
@@ -198,6 +249,8 @@ async def mark_message_as_read(
     if not was_already_read:
         message.is_read = True
         message.read_at = datetime.now(timezone.utc)
+        if message.delivered_at is None:
+            message.delivered_at = message.read_at
         db.commit()
         db.refresh(message)
 
@@ -263,14 +316,6 @@ def get_chat_history(
     # aunque normalmente la UI los ordena. Aquí los enviamos en orden descendente por fecha
     # y la UI los puede renderizar inversamente o revertirlos).
     return [
-        {
-            "id": msg.id,
-            "sender_id": msg.sender_id,
-            "receiver_id": msg.receiver_id,
-            "content": msg.content,
-            "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
-            "is_read": msg.is_read,
-            "read_at": msg.read_at.isoformat() if msg.read_at else None
-        }
+        _serialize_message_payload(msg)
         for msg in messages
     ]

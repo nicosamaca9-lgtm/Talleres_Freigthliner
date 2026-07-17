@@ -1,45 +1,59 @@
-from typing import Dict
+from typing import Dict, Set
 from fastapi import WebSocket
-import json
 
 class ConnectionManager:
     def __init__(self):
-        # Maps user_id to an active WebSocket connection
-        self.active_connections: Dict[int, WebSocket] = {}
+        # Maps each user_id to all active WebSocket connections for multi-device support.
+        self.active_connections: Dict[int, Set[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, user_id: int):
         await websocket.accept()
-        self.active_connections[user_id] = websocket
+        self.active_connections.setdefault(user_id, set()).add(websocket)
 
-    def disconnect(self, user_id: int):
-        if user_id in self.active_connections:
+    def disconnect(self, user_id: int, websocket: WebSocket | None = None):
+        if user_id not in self.active_connections:
+            return
+
+        if websocket is None:
             del self.active_connections[user_id]
+            return
+
+        self.active_connections[user_id].discard(websocket)
+        if not self.active_connections[user_id]:
+            del self.active_connections[user_id]
+
+    def is_user_online(self, user_id: int) -> bool:
+        return bool(self.active_connections.get(user_id))
 
     async def send_personal_message(self, message: str, user_id: int) -> bool:
         """
-        Sends a message to a specific user if they are connected.
-        Returns True if sent, False if the user is not connected.
+        Sends a text message to all active user connections.
+        Returns True if at least one connection received it.
         """
-        if user_id in self.active_connections:
-            websocket = self.active_connections[user_id]
+        connections = list(self.active_connections.get(user_id, set()))
+        sent_any = False
+
+        for websocket in connections:
             try:
                 await websocket.send_text(message)
-                return True
+                sent_any = True
             except Exception:
-                self.disconnect(user_id)
-                return False
-        return False
+                self.disconnect(user_id, websocket)
+
+        return sent_any
 
     async def send_personal_json(self, data: dict, user_id: int) -> bool:
-        if user_id in self.active_connections:
-            websocket = self.active_connections[user_id]
+        connections = list(self.active_connections.get(user_id, set()))
+        sent_any = False
+
+        for websocket in connections:
             try:
                 await websocket.send_json(data)
-                return True
+                sent_any = True
             except Exception:
-                self.disconnect(user_id)
-                return False
-        return False
+                self.disconnect(user_id, websocket)
+
+        return sent_any
 
 # Global instance to be used across the app
 manager = ConnectionManager()
