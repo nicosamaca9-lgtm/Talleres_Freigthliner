@@ -7,6 +7,7 @@ import 'package:mobile/screens/chat/widgets/chat_message_bubble.dart';
 MessageModel message({
   required int id,
   required int senderId,
+  String content = 'Mensaje de prueba',
   bool isRead = false,
   String? deliveredAt,
   String? readAt,
@@ -16,7 +17,7 @@ MessageModel message({
     id: id,
     senderId: senderId,
     receiverId: 2,
-    content: 'Mensaje de prueba',
+    content: content,
     timestamp: '2026-07-17T14:35:00',
     isRead: isRead,
     deliveredAt: deliveredAt,
@@ -62,6 +63,31 @@ void main() {
     expect(find.bySemanticsLabel('Mensaje leido'), findsNothing);
     expect(find.bySemanticsLabel('Mensaje enviado'), findsNothing);
     expect(find.bySemanticsLabel('Mensaje entregado'), findsNothing);
+  });
+
+  testWidgets('short messages use a compact bubble width', (tester) async {
+    tester.view.physicalSize = const Size(480, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatMessageBubble(
+            message: message(id: 1, senderId: 1, content: 'Ok'),
+            isMe: true,
+          ),
+        ),
+      ),
+    );
+
+    final bubbleFinder = find.ancestor(
+      of: find.text('Ok'),
+      matching: find.byType(Container),
+    );
+
+    expect(tester.getSize(bubbleFinder.last).width, lessThan(170));
   });
 
   testWidgets('message status is derived from real delivery/read data', (

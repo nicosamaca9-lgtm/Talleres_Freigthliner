@@ -20,60 +20,75 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     debugOnBuild?.call();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bubbleColor = isMe
+        ? (isDark
+              ? AppTheme.green.withValues(alpha: 0.18)
+              : const Color(0xFFE8F8EF))
+        : AppTheme.cardColor(context);
+    final borderColor = isMe
+        ? (isDark
+              ? AppTheme.green.withValues(alpha: 0.34)
+              : const Color(0xFFCBEED8))
+        : AppTheme.borderColor(context);
+    final textColor = AppTheme.textColor(context);
+    final timeColor = AppTheme.textMutedColor(context);
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 7),
-        decoration: BoxDecoration(
-          color: isMe ? AppTheme.green : AppTheme.cardColor(context),
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: isMe ? const Radius.circular(0) : null,
-            bottomLeft: !isMe ? const Radius.circular(0) : null,
-          ),
-          border: isMe
-              ? null
-              : Border.all(color: AppTheme.borderColor(context)),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  message.content,
-                  style: TextStyle(
-                    color: isMe ? Colors.black : AppTheme.textColor(context),
-                  ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isMe ? 56 : 8, 3, isMe ? 8 : 56, 3),
+      child: Row(
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 10, 6),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.circular(14).copyWith(
+                  bottomRight: isMe ? const Radius.circular(5) : null,
+                  bottomLeft: !isMe ? const Radius.circular(5) : null,
                 ),
+                border: Border.all(color: borderColor),
               ),
-              const SizedBox(height: 4),
-              Row(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    _formatTime(message.timestamp),
+                    message.content,
+                    textAlign: TextAlign.start,
+                    softWrap: true,
                     style: TextStyle(
-                      color: isMe
-                          ? Colors.black.withValues(alpha: 0.64)
-                          : AppTheme.textMutedColor(context),
-                      fontSize: 11,
-                      height: 1,
+                      color: textColor,
+                      fontSize: 15,
+                      height: 1.25,
                     ),
                   ),
-                  if (isMe) ...[
-                    const SizedBox(width: 4),
-                    MessageStatusIcon(status: message.status),
-                  ],
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTime(message.timestamp),
+                        style: TextStyle(
+                          color: timeColor,
+                          fontSize: 11,
+                          height: 1,
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 4),
+                        MessageStatusIcon(status: message.status, size: 14),
+                      ],
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

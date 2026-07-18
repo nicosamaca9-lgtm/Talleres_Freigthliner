@@ -180,6 +180,8 @@ class _ChatMessagesView extends StatelessWidget {
 
         return ListView.builder(
           controller: scrollController,
+          physics: const ClampingScrollPhysics(),
+          clipBehavior: Clip.hardEdge,
           reverse: true,
           itemCount: state.messageIds.length + (state.hasMoreHistory ? 1 : 0),
           itemBuilder: (context, index) {

@@ -7,6 +7,7 @@ import 'package:mobile/models/user_model.dart';
 import 'package:mobile/providers/admin_provider.dart';
 import 'package:mobile/providers/chat_provider.dart';
 import 'package:mobile/screens/admin/widgets/admin_chat_tab.dart';
+import 'package:mobile/widgets/unread_badge.dart';
 import 'package:provider/provider.dart';
 
 class FakeAdminProvider extends AdminProvider {
@@ -103,5 +104,53 @@ void main() {
     expect(find.text('Marta Mecanica'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.bySemanticsLabel('1 mensajes no leidos'), findsOneWidget);
+  });
+
+  testWidgets('uses minimal avatars and compact unread badges', (tester) async {
+    final adminProvider = FakeAdminProvider([
+      buildUser(id: 2, nombre: 'Carlos', apellido: 'Cliente', rol: 'Cliente'),
+    ]);
+    final chatProvider = ChatProvider();
+    chatProvider.handleSocketData(
+      jsonEncode({
+        'id': 101,
+        'sender_id': 2,
+        'receiver_id': 1,
+        'content': 'Pendiente',
+        'timestamp': '2026-07-17T15:10:00Z',
+        'is_read': false,
+        'status': 'sent',
+      }),
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AdminProvider>.value(value: adminProvider),
+          ChangeNotifierProvider<ChatProvider>.value(value: chatProvider),
+        ],
+        child: const MaterialApp(home: Scaffold(body: AdminChatTab())),
+      ),
+    );
+    await tester.pump();
+
+    final avatar = tester.widget<Container>(
+      find.ancestor(of: find.text('C').first, matching: find.byType(Container)),
+    );
+    final avatarDecoration = avatar.decoration! as BoxDecoration;
+    final avatarBorder = avatarDecoration.border! as Border;
+
+    expect(avatar.constraints!.minWidth, 38);
+    expect(avatar.constraints!.minHeight, 38);
+    expect(avatarDecoration.shape, BoxShape.circle);
+    expect(avatarBorder.top.width, 0.8);
+
+    final badge = tester.widget<UnreadBadge>(
+      find.byWidgetPredicate(
+        (widget) => widget is UnreadBadge && widget.count == 1,
+      ),
+    );
+
+    expect(badge.compact, isTrue);
   });
 }
