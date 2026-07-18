@@ -1,6 +1,6 @@
 # app/Api/v1/endpoints/AdminEndpoint.py
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.UserSchema import MechanicRegister
@@ -127,11 +127,17 @@ class AssignMechanicRequest(BaseModel):
 def assign_mechanic(
     id_orden: int,
     data: AssignMechanicRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles(UserRole.admin.value))
 ):
     try:
-        return AdminService.assign_mechanic_to_order(db, id_orden, data.id_mecanico)
+        return AdminService.assign_mechanic_to_order(
+            db,
+            id_orden,
+            data.id_mecanico,
+            background_tasks=background_tasks,
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -7,6 +7,7 @@ from app.models.VehicleEntity import Vehicle
 from app.models.TechnicalReportEntity import TechnicalReport
 from app.models.ReceiptEntity import Receipt, ReceiptItem
 from app.models.UserEntity import User
+from app.services.NotificationService import NotificationService, NotificationType
 
 class AdminService:
     @staticmethod
@@ -263,7 +264,12 @@ class AdminService:
         return db.query(Receipt).filter(Receipt.placa == placa).order_by(Receipt.fecha_emision.desc()).all()
 
     @staticmethod
-    def assign_mechanic_to_order(db: Session, id_orden: int, id_mecanico: int):
+    def assign_mechanic_to_order(
+        db: Session,
+        id_orden: int,
+        id_mecanico: int,
+        background_tasks=None,
+    ):
         order = db.query(ServiceOrder).filter(ServiceOrder.id_orden == id_orden).first()
         if not order:
             raise ValueError("Orden de servicio no encontrada")
@@ -272,9 +278,24 @@ class AdminService:
         if not mechanic:
             raise ValueError("El usuario no es un mecánico válido")
             
+        previous_mechanic_id = order.id_mecanico
         order.id_mecanico = id_mecanico
         db.commit()
         db.refresh(order)
+
+        if previous_mechanic_id != id_mecanico:
+            NotificationService.notify(
+                user_ids=[id_mecanico],
+                type=NotificationType.order_assigned,
+                title="Orden asignada",
+                body="Se te asigno una orden de servicio",
+                data={
+                    "type": NotificationType.order_assigned.value,
+                    "order_id": str(order.id_orden),
+                },
+                background_tasks=background_tasks,
+            )
+
         return order
         
     @staticmethod
