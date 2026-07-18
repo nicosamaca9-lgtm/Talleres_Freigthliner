@@ -24,7 +24,7 @@ class NotificationService:
     @staticmethod
     def notify(
         *,
-        db: Session,
+        db: Session | None = None,
         user_ids: list[int],
         type: NotificationType,
         title: str,

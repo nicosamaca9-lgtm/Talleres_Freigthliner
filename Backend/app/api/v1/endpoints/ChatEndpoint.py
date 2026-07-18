@@ -15,7 +15,7 @@ from app.db.session import SessionLocal, get_db
 from app.models.MessageEntity import Message
 from app.models.UserEntity import User
 from app.services.websocket_manager import manager
-from app.integrations.firebase_client import send_push_notification
+from app.services.NotificationService import NotificationService, NotificationType
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -169,10 +169,84 @@ def _process_message_in_db(sender_id: int, sender_role: str, raw_receiver_id: an
         }
 
 
+def _chat_id_for_direct_message(sender_id: int, recipient_ids: list[int]) -> str:
+    first_recipient_id = recipient_ids[0]
+    low_id = min(sender_id, first_recipient_id)
+    high_id = max(sender_id, first_recipient_id)
+    return f"dm:{low_id}:{high_id}"
+
+
+def _sender_contact_candidates(sender_id: int, sender_role: str) -> list[object]:
+    candidates: list[object] = [sender_id]
+    if sender_role == UserRole.admin.value:
+        candidates.append("admin")
+    return candidates
+
+
+def _queue_new_message_notification(
+    *,
+    sender_id: int,
+    sender_role: str,
+    recipient_ids: list[int],
+    message_id: int,
+    background_tasks=None,
+) -> None:
+    target_recipient_ids = sorted(
+        {recipient_id for recipient_id in recipient_ids if recipient_id != sender_id}
+    )
+    if not target_recipient_ids:
+        return
+
+    contact_candidates = _sender_contact_candidates(sender_id, sender_role)
+    excluded_device_ids: list[str] = []
+    for recipient_id in target_recipient_ids:
+        excluded_device_ids.extend(
+            manager.devices_with_open_chat(recipient_id, contact_candidates)
+        )
+
+    NotificationService.notify(
+        user_ids=target_recipient_ids,
+        type=NotificationType.new_message,
+        title="Nuevo mensaje",
+        body="Tienes un mensaje nuevo",
+        data={
+            "type": NotificationType.new_message.value,
+            "chat_id": _chat_id_for_direct_message(sender_id, target_recipient_ids),
+            "contact_id": str(sender_id),
+            "message_id": str(message_id),
+        },
+        background_tasks=background_tasks,
+        exclude_device_ids=excluded_device_ids,
+    )
+
+
+def _is_chat_presence_event(message_data: dict) -> bool:
+    return message_data.get("type") in {"chat_opened", "chat_closed"}
+
+
+async def _handle_chat_presence_event(
+    *,
+    message_data: dict,
+    user_id: int,
+    device_id: str | None,
+) -> None:
+    if not device_id:
+        return
+
+    event_type = message_data.get("type")
+    if event_type == "chat_opened":
+        contact_id = message_data.get("contact_id")
+        if contact_id is not None:
+            manager.mark_chat_opened(user_id, device_id, contact_id)
+    elif event_type == "chat_closed":
+        manager.mark_chat_closed(user_id, device_id)
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: Optional[str] = Query(None)
+    token: Optional[str] = Query(None),
+    device_id: Optional[str] = Query(None),
 ):
     if not token:
         await websocket.close(code=1008, reason="Missing token")
@@ -196,11 +270,25 @@ async def websocket_endpoint(
         await websocket.close(code=1008, reason="Invalid user ID in token")
         return
 
-    await manager.connect(websocket, sender_id)
+    await manager.connect(websocket, sender_id, device_id=device_id)
 
     try:
         while True:
             data = await websocket.receive_text()
+
+            try:
+                message_data = json.loads(data)
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "Formato JSON inválido"})
+                continue
+
+            if _is_chat_presence_event(message_data):
+                await _handle_chat_presence_event(
+                    message_data=message_data,
+                    user_id=sender_id,
+                    device_id=device_id,
+                )
+                continue
 
             # Rate Limiting
             now = time()
@@ -209,12 +297,6 @@ async def websocket_endpoint(
                 await websocket.send_json({"error": "Demasiados mensajes, espera un momento"})
                 continue
             websocket._last_msg = now
-
-            try:
-                message_data = json.loads(data)
-            except json.JSONDecodeError:
-                await websocket.send_json({"error": "Formato JSON inválido"})
-                continue
 
             raw_receiver_id = message_data.get("receiver_id")
             content = message_data.get("content")
@@ -249,8 +331,12 @@ async def websocket_endpoint(
             if delivery_payload is not None:
                 msg_payload = delivery_payload
 
-            if not sent_ws:
-                await send_push_notification(actual_receiver_id, content)
+            _queue_new_message_notification(
+                sender_id=sender_id,
+                sender_role=sender_role,
+                recipient_ids=[actual_receiver_id],
+                message_id=msg_payload["id"],
+            )
 
             # Echo: enviar confirmación al sender para que vea su propio mensaje
             await manager.send_personal_json(msg_payload, sender_id)

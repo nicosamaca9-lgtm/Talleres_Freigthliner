@@ -8,12 +8,19 @@ import '../models/message_status.dart';
 import '../core/storage/secure_storage.dart';
 import '../core/network/api_client.dart';
 
+typedef WebSocketConnector = WebSocketChannel Function(Uri uri);
+
 class ChatProvider extends ChangeNotifier {
-  ChatProvider({Dio? httpClient}) : _httpClient = httpClient ?? apiClient;
+  ChatProvider({Dio? httpClient, WebSocketConnector? webSocketConnector})
+    : _httpClient = httpClient ?? apiClient,
+      _webSocketConnector =
+          webSocketConnector ?? ((uri) => WebSocketChannel.connect(uri));
 
   final Dio _httpClient;
+  final WebSocketConnector _webSocketConnector;
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
+  String? _deviceId;
   bool _isConnected = false;
   bool _isConnecting = false;
   bool _reconnectEnabled = true;
@@ -64,9 +71,12 @@ class ChatProvider extends ChangeNotifier {
       final wsUrl = ApiClient.baseUrl
           .replaceFirst('http', 'ws')
           .replaceFirst('/api/v1', '/api/v1/chat/ws');
-      final uri = Uri.parse('$wsUrl?token=$token');
+      _deviceId = await SecureStorage.getDeviceId();
+      final uri = Uri.parse(
+        wsUrl,
+      ).replace(queryParameters: {'token': token, 'device_id': _deviceId!});
 
-      _channel = WebSocketChannel.connect(uri);
+      _channel = _webSocketConnector(uri);
       _isConnected = true;
       _isConnecting = false;
       _retrySeconds = 1; // Reset backoff en conexión exitosa
@@ -85,6 +95,9 @@ class ChatProvider extends ChangeNotifier {
           _handleSocketClosed();
         },
       );
+      if (_activeContactId != null) {
+        _sendChatPresenceOpened(_activeContactId);
+      }
     } catch (e) {
       _isConnecting = false;
       debugPrint('Error connecting to WebSocket: $e');
@@ -162,6 +175,7 @@ class ChatProvider extends ChangeNotifier {
   void _handleSocketClosed() {
     _subscription = null;
     _channel = null;
+    _deviceId = null;
     _isConnecting = false;
 
     if (_isConnected) {
@@ -305,6 +319,12 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> setActiveContact(dynamic contactId) async {
     _activeContactId = contactId;
+    if (contactId == null) {
+      _sendChatPresenceClosed();
+    } else {
+      _sendChatPresenceOpened(contactId);
+    }
+
     var shouldMarkRead = false;
 
     if (contactId != null) {
@@ -320,6 +340,22 @@ class ChatProvider extends ChangeNotifier {
     if (shouldMarkRead) {
       await markConversationRead(contactId);
     }
+  }
+
+  void _sendChatPresenceOpened(dynamic contactId) {
+    _sendControlPayload({
+      'type': 'chat_opened',
+      'contact_id': contactId.toString(),
+    });
+  }
+
+  void _sendChatPresenceClosed() {
+    _sendControlPayload({'type': 'chat_closed'});
+  }
+
+  void _sendControlPayload(Map<String, dynamic> payload) {
+    if (!_isConnected || _channel == null) return;
+    _channel!.sink.add(jsonEncode(payload));
   }
 
   Future<void> loadHistory(dynamic contactId) async {
@@ -399,10 +435,14 @@ class ChatProvider extends ChangeNotifier {
     _reconnectEnabled = false;
     _isConnecting = false;
     _retryTimer?.cancel();
+    if (_activeContactId != null) {
+      _sendChatPresenceClosed();
+    }
     _subscription?.cancel();
     _subscription = null;
     _channel?.sink.close();
     _channel = null;
+    _deviceId = null;
     _isConnected = false;
     _messages.clear();
     _unreadCounts.clear();
