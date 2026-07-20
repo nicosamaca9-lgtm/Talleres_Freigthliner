@@ -13,6 +13,7 @@ class VehicleBase(BaseModel):
 class VehicleCreate(VehicleBase):
     pass
 
+
 from typing import Optional
 
 class VehicleResponse(VehicleBase):
@@ -20,6 +21,7 @@ class VehicleResponse(VehicleBase):
     propietario_nombre: Optional[str] = None
     propietario_telefono: Optional[str] = None
     propietario_cedula: Optional[str] = None
+    propietario_correo: Optional[str] = None
 
 class MyVehicleResponse(VehicleBase):
     id_vehiculo: int

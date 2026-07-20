@@ -27,6 +27,7 @@ class ReceiptBase(BaseModel):
     cliente_telefono: Optional[str] = None
     cliente_direccion: Optional[str] = None
     cliente_ciudad: str = "DUITAMA"
+    cliente_correo: Optional[str] = None
     vendedor: Optional[str] = None
     placa: str
     forma_pago: Optional[str] = None
@@ -43,6 +44,7 @@ class ReceiptUpdate(BaseModel):
     cliente_telefono: Optional[str] = None
     cliente_direccion: Optional[str] = None
     cliente_ciudad: Optional[str] = None
+    cliente_correo: Optional[str] = None
     vendedor: Optional[str] = None
     placa: Optional[str] = None
     forma_pago: Optional[str] = None
