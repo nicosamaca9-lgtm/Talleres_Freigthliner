@@ -42,3 +42,8 @@ class Vehicle(Base):
     def propietario_cedula(self):
         owner = next((vu.usuario for vu in self.vehicle_users if vu.rol_vehiculo == "Propietario"), None)
         return owner.cedula if owner else None
+
+    @property
+    def propietario_correo(self):
+        owner = next((vu.usuario for vu in self.vehicle_users if vu.rol_vehiculo == "Propietario"), None)
+        return owner.correo if owner else None

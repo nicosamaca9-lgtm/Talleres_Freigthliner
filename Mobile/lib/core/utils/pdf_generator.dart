@@ -129,7 +129,7 @@ class PdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text('TF CENTRO AUTOMOTRIZ', style: pw.TextStyle(color: PdfColors.black, fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                    pw.Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                   ],
                 ),
               ),
@@ -143,10 +143,10 @@ class PdfGenerator {
                 data: <List<String>>[
                   ['CLIENTE', receipt['cliente_nombre'] ?? '', 'POR CONCEPTO DE'],
                   ['NIT/C.C', receipt['cliente_nit'] ?? '', receipt['concepto'] ?? ''],
-                  ['DIRECCION', receipt['cliente_direccion'] ?? '', ''],
-                  ['CIUDAD', receipt['cliente_ciudad'] ?? '', ''],
-                  ['TELEFONO', receipt['cliente_telefono'] ?? '', 'PLACA: ${receipt['placa'] ?? ''}'],
-                  ['VENDEDOR', receipt['vendedor'] ?? '', 'FECHA DOC: ${receipt['fecha_emision']?.split('T')[0] ?? ''}'],
+                  ['DIRECCION', receipt['cliente_direccion'] ?? '', 'FECHA DOC: ${receipt['fecha_emision']?.split('T')[0] ?? ''}'],
+                  ['CIUDAD', receipt['cliente_ciudad'] ?? '', 'PLACA: ${receipt['placa'] ?? ''}'],
+                  ['TELEFONO', receipt['cliente_telefono'] ?? '', 'VENDEDOR: ${receipt['vendedor'] ?? ''}'],
+                  ['CORREO', receipt['cliente_correo'] ?? '', ''],
                 ],
               ),
               pw.SizedBox(height: 20),

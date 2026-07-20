@@ -136,6 +136,7 @@ class AdminService:
             cliente_telefono=data.cliente_telefono,
             cliente_direccion=data.cliente_direccion,
             cliente_ciudad=data.cliente_ciudad,
+            cliente_correo=data.cliente_correo,
             vendedor=data.vendedor,
             placa=data.placa.upper() if data.placa else data.placa,
             forma_pago=data.forma_pago,

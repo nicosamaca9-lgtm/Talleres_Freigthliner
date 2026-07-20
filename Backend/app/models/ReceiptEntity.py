@@ -22,6 +22,7 @@ class Receipt(Base):
     cliente_telefono = Column(String(20), nullable=True)
     cliente_direccion = Column(String(150), nullable=True)
     cliente_ciudad = Column(String(100), default="DUITAMA")
+    cliente_correo = Column(String(150), nullable=True)
     vendedor = Column(String(100), nullable=True)
     placa = Column(String(20), nullable=False)
     forma_pago = Column(String(50), nullable=True) # E.g. Contado, Credito
