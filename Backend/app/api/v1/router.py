@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
 from app.api.v1.endpoints.BookingEndpoint import router as booking_router
 from app.api.v1.endpoints.ServiceOrderEndpoint import router as service_order_router
 from app.api.v1.endpoints import ChatEndpoint
+from app.api.v1.endpoints.DeviceTokenEndpoint import router as device_token_router
 
 
 api_router = APIRouter()
@@ -29,3 +30,8 @@ api_router.include_router(
 api_router.include_router(UploadEndpoint.router, prefix="/upload-image", tags=["Uploads"])
 api_router.include_router(CommentEndpoint.router, prefix="/comments", tags=["Comments"])
 api_router.include_router(ChatEndpoint.router, prefix="/chat", tags=["Chat"])
+api_router.include_router(
+    device_token_router,
+    prefix="/device-tokens",
+    tags=["Device Tokens"],
+)

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
@@ -11,8 +14,17 @@ import 'providers/mechanic_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/theme_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'services/notification_navigation_service.dart';
+import 'services/push_background_handler.dart';
+import 'services/push_notification_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final firebaseReady = await PushNotificationService.initializeFirebase();
+  if (firebaseReady) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -45,6 +57,10 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     final authProvider = context.read<AuthProvider>();
     _router = createAppRouter(authProvider);
+    pushNotificationService.configureNavigation(
+      NotificationNavigationService(GoRouterNotificationNavigator(_router)),
+    );
+    unawaited(pushNotificationService.initialize());
   }
 
   @override

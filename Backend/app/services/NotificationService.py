@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.integrations import firebase_client
-from app.models.DeviceTokenEntity import DeviceToken
+from app.models.DeviceTokenEntity import DeviceToken, truncate_fcm_token
 
 logger = logging.getLogger(__name__)
 
@@ -105,15 +105,36 @@ class NotificationService:
         if not user_ids:
             return
 
+        total_success = 0
+        total_failure = 0
+        should_log_summary = False
         db = SessionLocal()
         try:
-            tokens = NotificationService._load_target_tokens(
+            targets = NotificationService._load_target_tokens(
                 db,
                 user_ids=user_ids,
                 exclude_device_ids=exclude_device_ids,
             )
+            tokens_by_user = NotificationService._tokens_by_user(targets)
+            for user_id in user_ids:
+                logger.info(
+                    "FCM: Preparando envío para usuario %s (%s dispositivo/s). Mensaje: '%s'",
+                    user_id,
+                    len(tokens_by_user.get(user_id, [])),
+                    body,
+                )
+
+            should_log_summary = True
+            tokens = [target.fcm_token for target in targets]
             if not tokens:
                 return
+
+            for token in tokens:
+                logger.debug(
+                    "Enviando Push al token: %s | Contenido: %s",
+                    truncate_fcm_token(token),
+                    body,
+                )
 
             for batch in NotificationService._chunks(tokens, size=500):
                 result = await firebase_client.send_multicast_notification(
@@ -122,12 +143,20 @@ class NotificationService:
                     body=body,
                     data=data,
                 )
+                total_success += result.success_count
+                total_failure += result.failure_count
                 if result.invalid_tokens:
                     NotificationService._delete_invalid_tokens(db, result.invalid_tokens)
         except Exception:
             logger.exception("Error sending notification batch")
         finally:
             db.close()
+            if should_log_summary:
+                logger.info(
+                    "Notificación masiva procesada. Éxito: %s, Fallos: %s",
+                    total_success,
+                    total_failure,
+                )
 
     @staticmethod
     def _load_target_tokens(
@@ -135,7 +164,7 @@ class NotificationService:
         *,
         user_ids: list[int],
         exclude_device_ids: list[str],
-    ) -> list[str]:
+    ) -> list[DeviceToken]:
         query = db.query(DeviceToken).filter(
             DeviceToken.user_id.in_(user_ids),
             DeviceToken.is_active.is_(True),
@@ -144,7 +173,14 @@ class NotificationService:
             query = query.filter(DeviceToken.device_id.notin_(exclude_device_ids))
 
         rows = query.order_by(DeviceToken.id).all()
-        return [row.fcm_token for row in rows]
+        return rows
+
+    @staticmethod
+    def _tokens_by_user(targets: list[DeviceToken]) -> dict[int, list[str]]:
+        tokens_by_user: dict[int, list[str]] = {}
+        for target in targets:
+            tokens_by_user.setdefault(target.user_id, []).append(target.fcm_token)
+        return tokens_by_user
 
     @staticmethod
     def _delete_invalid_tokens(db: Session, invalid_tokens: list[str]) -> None:

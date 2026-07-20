@@ -1,12 +1,16 @@
 import inspect
+import logging
 
 import pytest
 
 from app.core.Enum import UserRole
 from app.integrations import firebase_client
-from app.models.DeviceTokenEntity import DeviceToken
+from app.models.DeviceTokenEntity import DeviceToken, truncate_fcm_token
 from app.services.NotificationService import NotificationService, NotificationType
 from tests.conftest import create_user
+
+
+FCM_LOGGER_NAME = "app.services.NotificationService"
 
 
 class FakeBackgroundTasks:
@@ -36,6 +40,22 @@ def add_device_token(db, *, user_id: int, token: str, device_id: str):
     db.commit()
     db.refresh(device_token)
     return device_token
+
+
+def test_device_token_registration_logs_truncated_token(db, caplog):
+    user = create_user(db, 1, UserRole.client, "client")
+    token = "fcm-token-0123456789abcdefghijklmnop"
+    caplog.set_level(logging.INFO, logger=FCM_LOGGER_NAME)
+
+    add_device_token(db, user_id=user.id_usuario, token=token, device_id="phone-a")
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(
+        f"FCM: Token recibido para usuario 1. Token: {truncate_fcm_token(token)}"
+        in message
+        for message in messages
+    )
+    assert all(token not in message for message in messages)
 
 
 @pytest.mark.asyncio
@@ -93,6 +113,64 @@ async def test_notify_batches_multiple_user_tokens_in_one_firebase_call(
             "data": {"type": "new_message", "chat_id": "dm:1:2"},
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_notify_logs_send_context_and_truncated_tokens(
+    db,
+    monkeypatch,
+    caplog,
+):
+    user = create_user(db, 1, UserRole.client, "client")
+    token_a = "fcm-token-a-0123456789abcdefghijklmnop"
+    token_b = "fcm-token-b-0123456789abcdefghijklmnop"
+    add_device_token(db, user_id=user.id_usuario, token=token_a, device_id="phone-a")
+    add_device_token(db, user_id=user.id_usuario, token=token_b, device_id="phone-b")
+
+    async def fake_send_multicast_notification(*, tokens, title, body, data):
+        return firebase_client.FirebaseMulticastResult(
+            success_count=1,
+            failure_count=1,
+            invalid_tokens=[],
+        )
+
+    monkeypatch.setattr(
+        firebase_client,
+        "send_multicast_notification",
+        fake_send_multicast_notification,
+    )
+
+    caplog.set_level(logging.DEBUG, logger=FCM_LOGGER_NAME)
+    caplog.clear()
+    background_tasks = FakeBackgroundTasks()
+    NotificationService.notify(
+        db=db,
+        user_ids=[user.id_usuario],
+        type=NotificationType.new_message,
+        title="Nuevo mensaje",
+        body="Tienes un mensaje nuevo",
+        data={"chat_id": "dm:1:2"},
+        background_tasks=background_tasks,
+    )
+
+    await run_background_task(background_tasks.tasks[0])
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert (
+        "FCM: Preparando envío para usuario 1 (2 dispositivo/s). "
+        "Mensaje: 'Tienes un mensaje nuevo'"
+    ) in messages
+    assert (
+        f"Enviando Push al token: {truncate_fcm_token(token_a)} | "
+        "Contenido: Tienes un mensaje nuevo"
+    ) in messages
+    assert (
+        f"Enviando Push al token: {truncate_fcm_token(token_b)} | "
+        "Contenido: Tienes un mensaje nuevo"
+    ) in messages
+    assert "Notificación masiva procesada. Éxito: 1, Fallos: 1" in messages
+    assert all(token_a not in message for message in messages)
+    assert all(token_b not in message for message in messages)
 
 
 @pytest.mark.asyncio

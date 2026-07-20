@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "203778112019",
+    "project_id": "taller-freigthliner",
+    "storage_bucket": "taller-freigthliner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:203778112019:android:d49fb09b94ada725a4dde6",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA978dGCXV4shMYiOVwyN3TuqeTIK1hqJI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

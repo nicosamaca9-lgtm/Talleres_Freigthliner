@@ -4,6 +4,7 @@ class SecureStorage {
   static const _storage = FlutterSecureStorage();
   static const _tokenKey = 'access_token';
   static const _deviceIdKey = 'device_id';
+  static const _lastFcmTokenKey = 'last_fcm_token';
 
   static Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -26,5 +27,17 @@ class SecureStorage {
     final generatedDeviceId = 'device-${DateTime.now().microsecondsSinceEpoch}';
     await _storage.write(key: _deviceIdKey, value: generatedDeviceId);
     return generatedDeviceId;
+  }
+
+  static Future<String?> getLastFcmToken() async {
+    return await _storage.read(key: _lastFcmTokenKey);
+  }
+
+  static Future<void> saveLastFcmToken(String token) async {
+    await _storage.write(key: _lastFcmTokenKey, value: token);
+  }
+
+  static Future<void> deleteLastFcmToken() async {
+    await _storage.delete(key: _lastFcmTokenKey);
   }
 }

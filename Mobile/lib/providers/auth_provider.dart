@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../repositories/auth_repository.dart';
 import '../core/storage/secure_storage.dart';
 import '../models/user_role.dart';
+import '../services/push_notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _repository = AuthRepository();
+  final PushNotificationService _pushNotificationService;
   bool _isLoading = false;
   bool _isInitialized = false;
   String? _errorMessage;
@@ -16,7 +19,8 @@ class AuthProvider extends ChangeNotifier {
   String? _userName;
   String? _userLastName;
 
-  AuthProvider() {
+  AuthProvider({PushNotificationService? pushService})
+    : _pushNotificationService = pushService ?? pushNotificationService {
     _loadSession();
   }
 
@@ -67,6 +71,7 @@ class AuthProvider extends ChangeNotifier {
       _userId = _extractUserIdFromToken(response.accessToken);
       _userName = _extractFieldFromToken(response.accessToken, 'nombre');
       _userLastName = _extractFieldFromToken(response.accessToken, 'apellido');
+      unawaited(_pushNotificationService.syncTokenAfterLogin());
       _setLoading(false);
       return true;
     } catch (e) {
@@ -128,6 +133,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await _pushNotificationService.removeTokenOnLogout();
     await SecureStorage.deleteToken();
     _token = null;
     _role = null;
