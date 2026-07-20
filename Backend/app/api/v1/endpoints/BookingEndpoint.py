@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.session import get_db
+from app.api.v1.deps import get_current_user
+from app.models.UserEntity import User
 from app.schemas.BookingSchema import BookingCreate, BookingResponse, BookingUpdate
 from app.services.BookingService import BookingService
 
@@ -55,11 +57,21 @@ def list_bookings_by_user(id_usuario: int, db: Session = Depends(get_db)):
     return BookingService.get_bookings_by_user(db=db, id_usuario=id_usuario)
 
 @router.put("/{id_agendamiento}", response_model=BookingResponse)
-def update_booking(id_agendamiento: int, booking: BookingUpdate, db: Session = Depends(get_db)):
+def update_booking(
+    id_agendamiento: int,
+    booking: BookingUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """
     Endpoint para reprogramar una cita (sujeto a regla de 3 horas).
     """
-    return BookingService.update_booking(db=db, id_agendamiento=id_agendamiento, booking_data=booking)
+    return BookingService.update_booking(
+        db=db,
+        id_agendamiento=id_agendamiento,
+        booking_data=booking,
+        current_user=current_user,
+    )
 
 @router.delete("/{id_agendamiento}")
 def cancel_booking(id_agendamiento: int, db: Session = Depends(get_db)):

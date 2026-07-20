@@ -10,11 +10,62 @@ from datetime import datetime, timedelta
 
 
 class VehicleService:
+    VEHICLE_REGISTERED_IN_OTHER_ACCOUNT = (
+        "Este vehiculo ya se encuentra registrado en otra cuenta. "
+        "Si eres el conductor, pidele al propietario que te genere un codigo de invitacion."
+    )
 
     @staticmethod
     def get_vehicle_by_placa(db: Session, placa: str):
         """Busca un vehiculo en la base de datos por su placa."""
         return db.query(Vehicle).filter(Vehicle.placa == placa.upper()).first()
+
+    @staticmethod
+    def register_or_claim_vehicle(db: Session, vehicle_data: VehicleCreate, user_id: int):
+        """Registra un vehiculo nuevo o reclama uno existente sin propietario."""
+        placa = vehicle_data.placa.upper()
+        db_vehicle = (
+            db.query(Vehicle)
+            .filter(Vehicle.placa == placa)
+            .with_for_update()
+            .first()
+        )
+
+        if not db_vehicle:
+            return VehicleService.create_vehicle(db=db, vehicle_data=vehicle_data, user_id=user_id)
+
+        owner = (
+            db.query(VehicleUser)
+            .filter(
+                VehicleUser.id_vehiculo == db_vehicle.id_vehiculo,
+                VehicleUser.rol_vehiculo == "Propietario",
+            )
+            .with_for_update()
+            .first()
+        )
+
+        if owner and owner.id_usuario != user_id:
+            raise HTTPException(
+                status_code=400,
+                detail=VehicleService.VEHICLE_REGISTERED_IN_OTHER_ACCOUNT,
+            )
+
+        db_vehicle.marca = vehicle_data.marca
+        db_vehicle.modelo = vehicle_data.modelo
+        db_vehicle.tipo_vehiculo = vehicle_data.tipo_vehiculo
+
+        if not owner:
+            db.add(
+                VehicleUser(
+                    id_usuario=user_id,
+                    id_vehiculo=db_vehicle.id_vehiculo,
+                    rol_vehiculo="Propietario",
+                )
+            )
+
+        db.commit()
+        db.refresh(db_vehicle)
+        return db_vehicle
 
     @staticmethod
     def create_vehicle(db: Session, vehicle_data: VehicleCreate, user_id: int):

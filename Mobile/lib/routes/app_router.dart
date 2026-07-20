@@ -68,6 +68,10 @@ GoRouter createAppRouter(AuthProvider authProvider) {
         builder: (context, state) => const ClientDashboardScreen(),
       ),
       GoRoute(
+        path: '/client/bookings/:bookingId',
+        builder: (context, state) => const ClientDashboardScreen(),
+      ),
+      GoRoute(
         path: '/client/orders/:orderId',
         builder: (context, state) => const ClientDashboardScreen(),
       ),

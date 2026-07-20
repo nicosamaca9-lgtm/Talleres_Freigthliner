@@ -74,11 +74,16 @@ def get_pending_reports(
 @router.patch("/bookings/{id_agendamiento}/confirm", response_model=BookingResponse)
 def confirm_booking(
     id_agendamiento: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles(UserRole.admin.value))
 ):
     try:
-        return AdminService.confirm_booking(db, id_agendamiento)
+        return AdminService.confirm_booking(
+            db,
+            id_agendamiento,
+            background_tasks=background_tasks,
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -86,11 +91,17 @@ def confirm_booking(
 def reject_booking(
     id_agendamiento: int,
     reject_data: BookingReject,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(require_roles(UserRole.admin.value))
 ):
     try:
-        return AdminService.reject_booking(db, id_agendamiento, reject_data.motivo_rechazo)
+        return AdminService.reject_booking(
+            db,
+            id_agendamiento,
+            reject_data.motivo_rechazo,
+            background_tasks=background_tasks,
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

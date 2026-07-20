@@ -125,11 +125,27 @@ class BookingService:
         return filtered_bookings
 
     @staticmethod
-    def update_booking(db: Session, id_agendamiento: int, booking_data: BookingUpdate):
+    def update_booking(
+        db: Session,
+        id_agendamiento: int,
+        booking_data: BookingUpdate,
+        current_user=None,
+    ):
         """Actualiza la fecha/hora de una cita validando la regla de las 3 horas"""
         db_booking = db.query(Booking).filter(Booking.id_agendamiento == id_agendamiento).first()
         if not db_booking:
             raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+        if current_user is not None:
+            can_manage_any_booking = current_user.rol in {
+                UserRole.admin,
+                UserRole.secretary,
+            }
+            if not can_manage_any_booking and db_booking.id_usuario != current_user.id_usuario:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No puedes reprogramar una cita de otro usuario.",
+                )
 
         # Regla de las 3 horas
         fecha_hora_cita = datetime.combine(db_booking.fecha_cita, db_booking.hora_cita)
@@ -138,6 +154,14 @@ class BookingService:
                 status_code=403, 
                 detail="Lo sentimos, ya contamos con usted para este espacio. No es posible reprogramar ni cancelar con menos de 3 horas de anticipación."
             )
+
+        schedule_changed = (
+            db_booking.fecha_cita != booking_data.fecha_cita
+            or db_booking.hora_cita != booking_data.hora_cita
+        )
+        if schedule_changed and db_booking.estado_confirmacion == ConfirmationState.CONFIRMADO:
+            db_booking.estado_confirmacion = ConfirmationState.PENDIENTE
+            db_booking.motivo_rechazo = None
 
         db_booking.fecha_cita = booking_data.fecha_cita
         db_booking.hora_cita = booking_data.hora_cita

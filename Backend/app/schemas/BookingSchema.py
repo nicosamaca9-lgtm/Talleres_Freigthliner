@@ -20,7 +20,7 @@ class BookingUpdate(BaseModel):
     observaciones: Optional[str] = Field(None, max_length=255, description="Nuevas notas o fallas reportadas")
 
 class BookingReject(BaseModel):
-    motivo_rechazo: str = Field(..., min_length=1, max_length=255, description="Motivo por el cual se rechaza la cita")
+    motivo_rechazo: str = Field(..., min_length=1, max_length=30, description="Motivo por el cual se rechaza la cita")
 
 class BookingResponse(BookingBase):
     id_agendamiento: int

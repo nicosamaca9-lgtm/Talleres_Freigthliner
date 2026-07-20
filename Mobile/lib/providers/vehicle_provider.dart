@@ -3,7 +3,10 @@ import '../models/vehicle_model.dart';
 import '../repositories/vehicle_repository.dart';
 
 class VehicleProvider extends ChangeNotifier {
-  final VehicleRepository _repository = VehicleRepository();
+  VehicleProvider({VehicleRepository? repository})
+    : _repository = repository ?? VehicleRepository();
+
+  final VehicleRepository _repository;
 
   List<VehicleModel> _vehicles = [];
   List<dynamic> _activeServiceOrders = [];
@@ -38,7 +41,16 @@ class VehicleProvider extends ChangeNotifier {
 
     try {
       final newVehicle = await _repository.registerVehicle(data);
-      _vehicles.add(newVehicle);
+      final index = _vehicles.indexWhere(
+        (vehicle) =>
+            vehicle.idVehiculo == newVehicle.idVehiculo ||
+            vehicle.placa == newVehicle.placa,
+      );
+      if (index == -1) {
+        _vehicles.add(newVehicle);
+      } else {
+        _vehicles[index] = newVehicle;
+      }
       _error = null;
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');

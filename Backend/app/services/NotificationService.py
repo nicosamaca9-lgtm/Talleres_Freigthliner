@@ -19,6 +19,8 @@ class NotificationType(str, Enum):
     order_assigned = "order_assigned"
     order_ready = "order_ready"
     booking_created = "booking_created"
+    booking_confirmed = "booking_confirmed"
+    booking_rejected = "booking_rejected"
 
 
 class NotificationService:

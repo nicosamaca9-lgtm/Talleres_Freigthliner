@@ -80,6 +80,40 @@ void main() {
     });
   });
 
+  test('booking_confirmed notification navigates to client bookings', () {
+    final navigator = FakeNotificationNavigator();
+    final service = NotificationNavigationService(navigator);
+
+    final handled = service.handleData({
+      'type': 'booking_confirmed',
+      'booking_id': '16',
+    });
+
+    expect(handled, isTrue);
+    expect(navigator.destinations.single.location, '/client/bookings/16');
+    expect(navigator.destinations.single.extra, {
+      'bookingId': 16,
+      'type': 'booking_confirmed',
+    });
+  });
+
+  test('booking_rejected notification navigates to client bookings', () {
+    final navigator = FakeNotificationNavigator();
+    final service = NotificationNavigationService(navigator);
+
+    final handled = service.handleData({
+      'type': 'booking_rejected',
+      'booking_id': '17',
+    });
+
+    expect(handled, isTrue);
+    expect(navigator.destinations.single.location, '/client/bookings/17');
+    expect(navigator.destinations.single.extra, {
+      'bookingId': 17,
+      'type': 'booking_rejected',
+    });
+  });
+
   test('unknown notification type uses controlled fallback', () {
     final navigator = FakeNotificationNavigator();
     final service = NotificationNavigationService(navigator);

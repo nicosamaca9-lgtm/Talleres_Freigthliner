@@ -249,7 +249,7 @@ class ActionButton extends StatelessWidget {
         ? AppTheme.red.withValues(alpha: 0.55)
         : AppTheme.borderColor(context);
     return ElevatedButton.icon(
-      onPressed: onPressed ?? () {},
+      onPressed: onPressed,
       icon: Icon(icon, size: 17),
       label: Text(label),
       style: ElevatedButton.styleFrom(

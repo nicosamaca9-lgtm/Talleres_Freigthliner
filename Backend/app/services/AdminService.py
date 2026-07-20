@@ -71,25 +71,76 @@ class AdminService:
         return db.query(TechnicalReport).filter(TechnicalReport.estado_revision == "PENDIENTE").all()
 
     @staticmethod
-    def confirm_booking(db: Session, id_agendamiento: int):
+    def confirm_booking(db: Session, id_agendamiento: int, background_tasks=None):
         booking = db.query(Booking).filter(Booking.id_agendamiento == id_agendamiento).first()
         if not booking:
             raise HTTPException(status_code=404, detail="Cita no encontrada")
+        previous_state = booking.estado_confirmacion
         booking.estado_confirmacion = ConfirmationState.CONFIRMADO
         db.commit()
         db.refresh(booking)
+        if previous_state != ConfirmationState.CONFIRMADO:
+            AdminService._notify_booking_status_change(
+                booking,
+                notification_type=NotificationType.booking_confirmed,
+                title="Cita confirmada",
+                body=AdminService._booking_status_body(
+                    booking,
+                    "Tu cita fue confirmada",
+                ),
+                background_tasks=background_tasks,
+            )
         return booking
 
     @staticmethod
-    def reject_booking(db: Session, id_agendamiento: int, motivo_rechazo: str):
+    def reject_booking(db: Session, id_agendamiento: int, motivo_rechazo: str, background_tasks=None):
         booking = db.query(Booking).filter(Booking.id_agendamiento == id_agendamiento).first()
         if not booking:
             raise HTTPException(status_code=404, detail="Cita no encontrada")
+        previous_state = booking.estado_confirmacion
         booking.estado_confirmacion = ConfirmationState.RECHAZADO
         booking.motivo_rechazo = motivo_rechazo
         db.commit()
         db.refresh(booking)
+        if previous_state != ConfirmationState.RECHAZADO:
+            AdminService._notify_booking_status_change(
+                booking,
+                notification_type=NotificationType.booking_rejected,
+                title="Cita rechazada",
+                body=AdminService._booking_status_body(
+                    booking,
+                    "Tu cita fue rechazada",
+                ),
+                background_tasks=background_tasks,
+            )
         return booking
+
+    @staticmethod
+    def _booking_status_body(booking: Booking, prefix: str) -> str:
+        booking_date = booking.fecha_cita.isoformat()
+        booking_time = booking.hora_cita.strftime("%H:%M")
+        return f"{prefix} para {booking_date} a las {booking_time}."
+
+    @staticmethod
+    def _notify_booking_status_change(
+        booking: Booking,
+        *,
+        notification_type: NotificationType,
+        title: str,
+        body: str,
+        background_tasks=None,
+    ):
+        NotificationService.notify(
+            user_ids=[booking.id_usuario],
+            type=notification_type,
+            title=title,
+            body=body,
+            data={
+                "type": notification_type.value,
+                "booking_id": str(booking.id_agendamiento),
+            },
+            background_tasks=background_tasks,
+        )
 
     @staticmethod
     def review_technical_report(db: Session, id_report: int, estado_revision: str, observaciones: str = None):
