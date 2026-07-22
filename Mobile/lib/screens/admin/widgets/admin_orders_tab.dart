@@ -315,7 +315,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                               separatorBuilder: (context, index) =>
                                   const SizedBox(width: 8),
                               itemBuilder: (context, i) {
-                                final fullUrl = '$apiBase${imageUrls[i]}';
+                                final img = imageUrls[i];
+                                final fullUrl = img.startsWith('http') ? img : '$apiBase$img';
                                 return GestureDetector(
                                   onTap: () {
                                     showDialog(

@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     # Firebase
     FIREBASE_CREDENTIALS_JSON: str | None = None
 
+    # Cloudinary
+    CLOUDINARY_CLOUD_NAME: str | None = None
+    CLOUDINARY_API_KEY: str | None = None
+    CLOUDINARY_API_SECRET: str | None = None
+
     class Config:
         env_file = ".env"
 

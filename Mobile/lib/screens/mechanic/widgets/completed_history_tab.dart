@@ -192,7 +192,8 @@ class _CompletedHistoryCard extends StatelessWidget {
                             itemCount: imageUrls.length,
                             separatorBuilder: (_, __) => const SizedBox(width: 8),
                             itemBuilder: (context, i) {
-                              final fullUrl = '$apiBase${imageUrls[i]}';
+                              final img = imageUrls[i];
+                              final fullUrl = img.startsWith('http') ? img : '$apiBase$img';
                               return GestureDetector(
                                 onTap: () {
                                   showDialog(
