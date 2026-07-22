@@ -1,6 +1,6 @@
 # app/Api/v1/endpoints/AuthEndpoint.py
 
-from fastapi import APIRouter, Depends, status, HTTPException, Request
+from fastapi import APIRouter, Depends, status, HTTPException, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,10 @@ from app.schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse, 
 from app.schemas.UserSchema import UserResponse
 from app.services.AuthService import register_client, login_user, change_password, update_profile
 from app.api.deps import get_current_user
+from app.services.EmailService import send_password_recovery_email
+from pydantic import BaseModel
+import random
+import string
 from app.models.UserEntity import User
 
 
@@ -51,6 +55,45 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
         )
+
+
+class ForgotPasswordRequest(BaseModel):
+    correo: str
+
+class ResetPasswordRequest(BaseModel):
+    correo: str
+    codigo: str
+    nueva_password: str
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.correo == data.correo).first()
+    if not user:
+        # Prevent email enumeration by returning a generic success message
+        return {"message": "Si el correo está registrado, se ha enviado un código de recuperación."}
+    
+    # Generate 6-digit PIN
+    pin = ''.join(random.choices(string.digits, k=6))
+    user.verification_token = pin
+    db.commit()
+
+    # Send email
+    background_tasks.add_task(send_password_recovery_email, user.correo, pin)
+    return {"message": "Si el correo está registrado, se ha enviado un código de recuperación."}
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    from app.core.security import hash_password
+    user = db.query(User).filter(User.correo == data.correo).first()
+    if not user or user.verification_token != data.codigo:
+        raise HTTPException(status_code=400, detail="Código inválido o expirado.")
+    
+    # Reset password
+    user.password_hash = hash_password(data.nueva_password)
+    user.verification_token = None  # Clear PIN
+    db.commit()
+    return {"message": "Contraseña actualizada exitosamente."}
 
 @router.post("/change-password")
 def change_password_endpoint(

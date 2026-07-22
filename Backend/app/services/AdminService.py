@@ -364,7 +364,15 @@ class AdminService:
             raise ValueError("Usuario no encontrado")
             
         # Lógica de eliminación según el rol
-        if user.rol == UserRole.mechanic: # o "Tecnico" si el enum es así
+        if user.rol == UserRole.mechanic:
+            # Reasignar reportes técnicos a un admin para no perder historial
+            from app.models.TechnicalReportEntity import TechnicalReport
+            admin = db.query(User).filter(User.rol == UserRole.admin).first()
+            if admin:
+                reports = db.query(TechnicalReport).filter(TechnicalReport.id_usuario == user.id_usuario).all()
+                for report in reports:
+                    report.id_usuario = admin.id_usuario
+
             orders = db.query(ServiceOrder).filter(ServiceOrder.id_mecanico == user.id_usuario).all()
             for order in orders:
                 order.id_mecanico = None
@@ -377,9 +385,16 @@ class AdminService:
             bookings = db.query(Booking).filter(Booking.id_usuario == user.id_usuario).all()
             for booking in bookings:
                 db.delete(booking)
-            db.commit()
             # Vehiculos y VehicleUser (owner link) se manejan por cascade_delete en la BD
             
+        # Limpiar chats y comentarios para evitar IntegrityError
+        from app.models.MessageEntity import Message
+        from app.models.CommentEntity import Comment
+        
+        db.query(Message).filter((Message.sender_id == user.id_usuario) | (Message.receiver_id == user.id_usuario)).delete(synchronize_session=False)
+        db.query(Comment).filter(Comment.id_usuario == user.id_usuario).delete(synchronize_session=False)
+        db.commit()
+
         db.delete(user)
         db.commit()
         return True

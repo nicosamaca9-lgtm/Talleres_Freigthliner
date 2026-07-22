@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../widgets/ui_components.dart';
@@ -85,7 +86,42 @@ class HelpCenterScreen extends StatelessWidget {
                   _ContactItem(
                     icon: Icons.location_on_rounded,
                     title: 'Ubicación',
-                    subtitle: ' TF Centro Automotriz Autopista Higueras , Duitama Boyacá',
+                    subtitle: 'TF Centro Automotriz Autopista Higueras, Duitama Boyacá',
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () async {
+                        // ✔ URL de Google Maps del taller:
+                        // Puedes cambiar esta URL en cualquier momento.
+                        // Para obtener la tuya: abre Google Maps, busca el taller,
+                        // presiona Compartir y copia el enlace corto.
+                        const String mapsUrl =
+                            'https://maps.app.goo.gl/UGVeDvuLGkqJsjt46';
+                        final Uri uri = Uri.parse(mapsUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No se pudo abrir Google Maps'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.map_rounded),
+                      label: const Text('Ver en Google Maps', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
                   ),
                 ],
               ),

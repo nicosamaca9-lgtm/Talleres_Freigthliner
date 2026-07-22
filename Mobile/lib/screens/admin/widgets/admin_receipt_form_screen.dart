@@ -93,8 +93,7 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos de vehículo cargados'), backgroundColor: Colors.green));
     } catch (e) {
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se encontró el vehículo: $e'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se encontró el vehículo o ocurrió un error: $e'), backgroundColor: Colors.orange));
     }
   }
 
@@ -254,9 +253,13 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                         const SizedBox(height: 16),
                         _buildTextField(_clienteNitCtrl, 'NIT/C.C', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                         const SizedBox(height: 16),
-                        _buildTextField(_clienteTelefonoCtrl, 'Teléfono', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+                        _buildTextField(_clienteTelefonoCtrl, 'Teléfono', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], customValidator: (val) {
+                          if (val == null || val.isEmpty) return 'Campo requerido';
+                          if (val.length != 10) return 'Debe tener 10 dígitos';
+                          return null;
+                        }),
                         const SizedBox(height: 16),
-                        _buildTextField(_clienteCorreoCtrl, 'Correo Electrónico', keyboardType: TextInputType.emailAddress),
+                        _buildTextField(_clienteCorreoCtrl, 'Correo Electrónico', keyboardType: TextInputType.emailAddress, customValidator: (val) => null),
                       ] else ...[
                         Row(
                           children: [
@@ -268,9 +271,13 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(child: _buildTextField(_clienteTelefonoCtrl, 'Teléfono', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly])),
+                            Expanded(child: _buildTextField(_clienteTelefonoCtrl, 'Teléfono', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], customValidator: (val) {
+                                if (val == null || val.isEmpty) return 'Campo requerido';
+                                if (val.length != 10) return 'Debe tener 10 dígitos';
+                                return null;
+                            })),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildTextField(_clienteCorreoCtrl, 'Correo Electrónico', keyboardType: TextInputType.emailAddress)),
+                            Expanded(child: _buildTextField(_clienteCorreoCtrl, 'Correo Electrónico', keyboardType: TextInputType.emailAddress, customValidator: (val) => null)),
                           ],
                         ),
                       ],

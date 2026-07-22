@@ -94,14 +94,43 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
     }
   }
 
-  Future<void> _submit() async {
+  Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedVehicle == null || _selectedDate == null || _selectedTime == null) {
+    if (_selectedVehicle == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes seleccionar vehículo, fecha y hora.')),
+        const SnackBar(content: Text('Por favor selecciona un vehículo'), backgroundColor: AppTheme.red),
       );
       return;
     }
+    if (_selectedDate == null || _selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona fecha y hora'), backgroundColor: AppTheme.red),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    final selectedDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+
+    // Validar que la cita sea con al menos 1 hora de anticipación si es para hoy
+    if (selectedDateTime.isBefore(now.add(const Duration(hours: 1)))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La cita debe agendarse con al menos 1 hora de anticipación.'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+      return;
+    }
+
+    final userId = context.read<AuthProvider>().userId;
+    if (userId == null) return;
 
     final hour = _selectedTime!.hour;
     final isMorning = hour >= 8 && hour < 12;
@@ -141,11 +170,7 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
       return;
     }
 
-    final userId = context.read<AuthProvider>().userId;
-    if (userId == null) return;
-
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-    final now = DateTime.now();
     final dateSolStr = DateFormat('yyyy-MM-dd').format(now);
     
     // Formato de hora HH:mm:ss
@@ -409,7 +434,7 @@ class _BookingRegistrationDialogState extends State<BookingRegistrationDialog> {
                         );
                       }
                       return ElevatedButton(
-                        onPressed: _submit,
+                        onPressed: _submitForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.green,
                           foregroundColor: AppTheme.bg,

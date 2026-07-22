@@ -86,4 +86,34 @@ class AuthRepository {
       throw Exception('Error inesperado');
     }
   }
+
+  Future<void> forgotPassword(String correo) async {
+    try {
+      await apiClient.post('/auth/forgot-password', data: {'correo': correo});
+    } catch (e) {
+      if (e is DioException) {
+        throw Exception(e.response?.data['detail'] ?? 'Error al solicitar recuperación');
+      }
+      throw Exception('Error inesperado');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String correo,
+    required String codigo,
+    required String nuevaPassword,
+  }) async {
+    try {
+      await apiClient.post('/auth/reset-password', data: {
+        'correo': correo,
+        'codigo': codigo,
+        'nueva_password': nuevaPassword,
+      });
+    } catch (e) {
+      if (e is DioException) {
+        throw Exception(e.response?.data['detail'] ?? 'Error al restablecer contraseña');
+      }
+      throw Exception('Error inesperado');
+    }
+  }
 }

@@ -108,7 +108,7 @@ class PdfGenerator {
     final List<List<String>> itemsData = [
       ['DESCRIPCION', 'CANTIDAD', 'VALOR UNT', 'IVA', 'TOTAL'],
       ...items.map((i) => [
-        i['descripcion']?.toString() ?? '',
+        i['descripcion']?.toString().toUpperCase() ?? '',
         i['cantidad']?.toString() ?? '0',
         i['valor_unitario']?.toString() ?? '0',
         '${i['porcentaje_iva']}%',
@@ -142,7 +142,7 @@ class PdfGenerator {
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: <List<String>>[
                   ['CLIENTE', receipt['cliente_nombre'] ?? '', 'POR CONCEPTO DE'],
-                  ['NIT/C.C', receipt['cliente_nit'] ?? '', receipt['concepto'] ?? ''],
+                  ['NIT/C.C', receipt['cliente_nit'] ?? '', receipt['concepto']?.toString().toUpperCase() ?? ''],
                   ['DIRECCION', receipt['cliente_direccion'] ?? '', 'FECHA DOC: ${receipt['fecha_emision']?.split('T')[0] ?? ''}'],
                   ['CIUDAD', receipt['cliente_ciudad'] ?? '', 'PLACA: ${receipt['placa'] ?? ''}'],
                   ['TELEFONO', receipt['cliente_telefono'] ?? '', 'VENDEDOR: ${receipt['vendedor'] ?? ''}'],
@@ -167,6 +167,12 @@ class PdfGenerator {
               ),
               pw.SizedBox(height: 40),
               pw.Text('NOTA: ${receipt['nota_pie'] ?? ''}', style: const pw.TextStyle(fontSize: 10)),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                'GARANTÍA: La garantía tiene una vigencia máxima de 30 días o 3,000 kilómetros (lo que ocurra primero) tras la entrega del vehículo. Aplica únicamente para la mano de obra y repuestos suministrados por el taller. No cubre piezas eléctricas ni daños por mal uso.', 
+                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                textAlign: pw.TextAlign.justify,
+              ),
               pw.Spacer(),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,

@@ -10,6 +10,8 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_logo.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/ui_components.dart';
+import 'widgets/forgot_password_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -202,6 +204,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   isLoading: context.watch<AuthProvider>().isLoading,
                   onPressed: _login,
                 ),
+                const SizedBox(height: 12),
+                // Botón de recuperar contraseña
+                if (!context.watch<AuthProvider>().isLoading)
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => const ForgotPasswordDialog(),
+                        );
+                      },
+                      child: Text(
+                        '¿Olvidaste tu contraseña?',
+                        style: GoogleFonts.dmSans(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

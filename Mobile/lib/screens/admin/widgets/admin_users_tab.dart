@@ -238,6 +238,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       'El teléfono debe tener exactamente 10 dígitos',
                     ),
                     backgroundColor: AppTheme.errorColor,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
                 return;
@@ -254,6 +255,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   const SnackBar(
                     content: Text('Usuario actualizado'),
                     backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               } catch (e) {
@@ -261,6 +263,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   SnackBar(
                     content: Text('Error: $e'),
                     backgroundColor: AppTheme.errorColor,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
@@ -391,6 +394,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                           'El teléfono debe tener exactamente 10 dígitos',
                         ),
                         backgroundColor: AppTheme.errorColor,
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                     return;
@@ -414,6 +418,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       SnackBar(
                         content: Text('$selectedRole creado exitosamente'),
                         backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   } catch (e) {
@@ -421,6 +426,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       SnackBar(
                         content: Text('Error: $e'),
                         backgroundColor: AppTheme.errorColor,
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   }
@@ -505,6 +511,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   const SnackBar(
                     content: Text('Usuario eliminado exitosamente'),
                     backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               } catch (e) {

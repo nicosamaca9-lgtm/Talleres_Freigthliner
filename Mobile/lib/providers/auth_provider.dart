@@ -168,6 +168,42 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> forgotPassword(String correo) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await _repository.forgotPassword(correo);
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String correo,
+    required String codigo,
+    required String nuevaPassword,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await _repository.resetPassword(
+        correo: correo,
+        codigo: codigo,
+        nuevaPassword: nuevaPassword,
+      );
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

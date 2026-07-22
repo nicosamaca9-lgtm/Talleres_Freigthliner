@@ -59,3 +59,48 @@ def send_verification_email(correo_destinatario: str, nombre: str, token: str):
     except Exception as e:
         print(f'[EmailService] Error al enviar correo a {correo_destinatario}: {e}')
         raise
+
+def send_password_recovery_email(to_email: str, pin: str):
+    """
+    Envía un correo con el PIN de 6 dígitos para recuperar contraseña.
+    """
+    if not SMTP_PASSWORD or not SMTP_USER:
+        print("[EmailService] No hay credenciales SMTP configuradas para recuperación.")
+        return
+
+    msg = MIMEMultipart("alternative")
+    msg['Subject'] = "Recuperación de Contraseña - Talleres Freightliner"
+    msg['From'] = f"Talleres Freightliner <{SMTP_USER}>"
+    msg['To'] = to_email
+
+    html_content = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #333333; text-align: center;">Recuperación de Contraseña</h2>
+            <p style="color: #555555; font-size: 16px;">Hola,</p>
+            <p style="color: #555555; font-size: 16px;">Has solicitado restablecer tu contraseña. Usa el siguiente código de 6 dígitos en la aplicación:</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <span style="background-color: #2ECC71; color: #ffffff; padding: 15px 30px; font-size: 24px; font-weight: bold; border-radius: 5px; letter-spacing: 5px;">{pin}</span>
+            </div>
+            <p style="color: #555555; font-size: 16px;">Si no solicitaste este cambio, puedes ignorar este correo de forma segura.</p>
+            <p style="color: #777777; font-size: 12px; margin-top: 40px; text-align: center;">
+                &copy; 2026 Talleres Freightliner. Todos los derechos reservados.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+
+    part = MIMEText(html_content, "html")
+    msg.attach(part)
+
+    try:
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+    except Exception as e:
+        print(f"[EmailService] Error al enviar correo de recuperación a {to_email}: {e}")
+        raise
