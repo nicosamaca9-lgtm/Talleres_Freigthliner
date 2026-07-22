@@ -1,6 +1,6 @@
-# app/Services/AuthService.py
-
+import uuid
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.core.security import verify_password, create_access_token, hash_password
 from app.repositories.UserRepository import (
@@ -34,12 +34,21 @@ def login_user(db: Session, data: LoginRequest):
     if not user:
         raise InvalidCredentialsError("Correo o contraseña incorrectos")
 
+    # Verificar cuenta activa solo para clientes
+    if user.rol == UserRole.client and not user.is_active:
+        raise InvalidCredentialsError(
+            "Cuenta no activa. Revisa tu correo electrónico y haz clic en el enlace de activación que te enviamos."
+        )
+
     access_token = create_access_token(
         subject=user.id_usuario,
         extra_data={
             "role": user.rol.value,
-            "nombre": user.nombre,
-            "apellido": user.apellido,
+            "name": user.nombre,
+            "last_name": user.apellido,
+            "correo": user.correo,
+            "telefono": user.telefono,
+            "cedula": user.cedula,
         },
     )
 
@@ -50,16 +59,36 @@ def login_user(db: Session, data: LoginRequest):
 
 
 def register_client(db: Session, data: ClientRegister):
-    """Registra un nuevo usuario con rol cliente."""
-    existing_user = get_user_by_unique_fields(db, data.correo, data.telefono, data.cedula)
+    """Registra un nuevo cliente como inactivo y envia correo de verificacion.
+    Si encuentra cuentas inactivas con los mismos datos, las elimina para permitir el registro."""
+    
+    # Buscar todos los usuarios que choquen con correo, telefono o cedula
+    existing_users = db.query(User).filter(
+        or_(
+            User.correo == data.correo,
+            User.telefono == data.telefono,
+            User.cedula == data.cedula
+        )
+    ).all()
 
-    if existing_user:
-        if existing_user.correo == data.correo:
-            raise UserAlreadyExistsError("El correo ya está registrado")
-        if existing_user.telefono == data.telefono:
-            raise UserAlreadyExistsError("El teléfono ya está registrado")
-        if getattr(existing_user, "cedula", None) == data.cedula:
-            raise UserAlreadyExistsError("La cédula ya está registrada")
+    for u in existing_users:
+        if u.is_active:
+            # Si el usuario activo choca, rechazamos el registro
+            if u.correo == data.correo:
+                raise UserAlreadyExistsError("El correo ya está registrado y activo")
+            if u.telefono == data.telefono:
+                raise UserAlreadyExistsError("El teléfono ya está registrado y activo")
+            if u.cedula == data.cedula:
+                raise UserAlreadyExistsError("La cédula ya está registrada y activa")
+        else:
+            # Si el usuario está inactivo, es 'basura' no confirmada. La borramos para dejar libre el dato.
+            db.delete(u)
+            
+    # Hacemos commit de las eliminaciones para liberar las restricciones de unicidad
+    if existing_users:
+        db.commit()
+
+    token = str(uuid.uuid4())
 
     user = User(
         nombre=data.nombre,
@@ -69,9 +98,20 @@ def register_client(db: Session, data: ClientRegister):
         correo=data.correo,
         password_hash=hash_password(data.password),
         rol=UserRole.client,
+        is_active=False,
+        verification_token=token,
     )
 
-    return create_user(db, user)
+    created = create_user(db, user)
+
+    # Enviar correo de verificacion (no bloqueante si falla)
+    try:
+        from app.services.EmailService import send_verification_email
+        send_verification_email(data.correo, data.nombre, token)
+    except Exception as e:
+        print(f"[AuthService] No se pudo enviar el correo de verificacion: {e}")
+
+    return created
 
 def change_password(db: Session, user: User, old_password: str, new_password: str):
     if not verify_password(old_password, user.password_hash):
@@ -79,3 +119,43 @@ def change_password(db: Session, user: User, old_password: str, new_password: st
     user.password_hash = hash_password(new_password)
     db.commit()
     return {"message": "Contraseña actualizada exitosamente"}
+
+from app.schemas.AuthSchema import UpdateProfileRequest
+
+def update_profile(db: Session, user: User, data: UpdateProfileRequest):
+    """Actualiza la informacion del usuario y retorna un nuevo token."""
+    # Revisar que el nuevo telefono o cedula no existan en OTRO usuario
+    if data.telefono and data.telefono != user.telefono:
+        if db.query(User).filter(User.telefono == data.telefono, User.id_usuario != user.id_usuario).first():
+            raise UserAlreadyExistsError("El teléfono ya está registrado por otro usuario")
+            
+    if data.cedula and data.cedula != user.cedula:
+        if db.query(User).filter(User.cedula == data.cedula, User.id_usuario != user.id_usuario).first():
+            raise UserAlreadyExistsError("La cédula ya está registrada por otro usuario")
+
+    user.nombre = data.nombre
+    user.apellido = data.apellido
+    user.telefono = data.telefono
+    user.cedula = data.cedula
+
+    db.commit()
+    db.refresh(user)
+
+    # Crear nuevo token con datos actualizados
+    access_token = create_access_token(
+        subject=user.id_usuario,
+        extra_data={
+            "role": user.rol.value,
+            "name": user.nombre,
+            "last_name": user.apellido,
+            "correo": user.correo,
+            "telefono": user.telefono,
+            "cedula": user.cedula,
+        }
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user
+    }

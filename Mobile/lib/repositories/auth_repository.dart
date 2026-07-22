@@ -64,4 +64,26 @@ class AuthRepository {
       throw Exception('Error inesperado');
     }
   }
+
+  Future<AuthResponse> updateProfile({
+    required String nombre,
+    required String apellido,
+    required String telefono,
+    required String cedula,
+  }) async {
+    try {
+      final response = await apiClient.put('/auth/profile', data: {
+        'nombre': nombre,
+        'apellido': apellido,
+        'telefono': telefono,
+        'cedula': cedula,
+      });
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      if (e is DioException) {
+        throw Exception(e.response?.data['detail'] ?? 'Error al actualizar perfil');
+      }
+      throw Exception('Error inesperado');
+    }
+  }
 }

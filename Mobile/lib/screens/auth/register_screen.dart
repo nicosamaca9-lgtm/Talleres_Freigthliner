@@ -24,10 +24,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _telefonoController = TextEditingController();
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   String? _correoError;
   String? _cedulaError;
   String? _telefonoError;
   String? _passwordError;
+  String? _confirmPasswordError;
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _cedulaController.dispose();
+    _telefonoController.dispose();
+    _correoController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   void _register() async {
     setState(() {
@@ -35,6 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _cedulaError = null;
       _telefonoError = null;
       _passwordError = null;
+      _confirmPasswordError = null;
     });
 
     final provider = context.read<AuthProvider>();
@@ -62,6 +77,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_passwordController.text.length < 6) {
       setState(() {
         _passwordError = 'La contraseña debe tener al menos 6 caracteres';
+      });
+      return;
+    }
+
+    if (_confirmPasswordController.text != _passwordController.text) {
+      setState(() {
+        _confirmPasswordError = 'Las contraseñas no coinciden';
       });
       return;
     }
@@ -114,7 +136,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
           content: Text(
-            'Tu cuenta ha sido creada con éxito. Ahora puedes iniciar sesión con tus credenciales.',
+            'Tu cuenta ha sido creada con éxito.\n\nHemos enviado un correo de verificación a tu email. Por favor revísalo (también la carpeta SPAM) y haz clic en el enlace para activar tu cuenta antes de iniciar sesión.',
             style: GoogleFonts.dmSans(
               color: AppTheme.textMutedColor(context),
               fontSize: 14,
@@ -245,6 +267,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   errorText: _passwordError,
+                ),
+                const SizedBox(height: 14),
+                CustomTextField(
+                  label: 'Confirmar Contraseña',
+                  hintText: 'Repite tu contraseña',
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  errorText: _confirmPasswordError,
                 ),
                 const SizedBox(height: 24),
                 CustomButton(

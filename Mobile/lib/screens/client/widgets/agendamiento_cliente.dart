@@ -245,7 +245,7 @@ class _BookingTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardColor(context),
+        backgroundColor: AppTheme.cardColor(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
@@ -259,7 +259,7 @@ class _BookingTile extends StatelessWidget {
               child: Text(
                 'Aviso Importante',
                 style: GoogleFonts.rajdhani(
-                  color: AppTheme.textColor(context),
+                  color: AppTheme.textColor(ctx),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -274,7 +274,7 @@ class _BookingTile extends StatelessWidget {
               ? 'Lo sentimos, ya contamos contigo para este espacio y no es posible reprogramar o cancelar con menos de 3 horas de anticipación.\n\n¡Agradecemos mucho tu comprensión!'
               : error,
           style: GoogleFonts.dmSans(
-            color: AppTheme.textMutedColor(context),
+            color: AppTheme.textMutedColor(ctx),
             fontSize: 15,
           ),
         ),
@@ -306,19 +306,19 @@ class _BookingTile extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardColor(context),
+        backgroundColor: AppTheme.cardColor(ctx),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           '¿Cancelar esta cita?',
           style: GoogleFonts.rajdhani(
-            color: AppTheme.textColor(context),
+            color: AppTheme.textColor(ctx),
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           'Esta acción no se puede deshacer. La cita del ${booking.fechaCita} a las ${booking.horaCita} será cancelada.',
           style: GoogleFonts.dmSans(
-            color: AppTheme.textMutedColor(context),
+            color: AppTheme.textMutedColor(ctx),
             fontSize: 14,
           ),
         ),
@@ -328,7 +328,7 @@ class _BookingTile extends StatelessWidget {
             child: Text(
               'No, volver',
               style: GoogleFonts.dmSans(
-                color: AppTheme.textMutedColor(context),
+                color: AppTheme.textMutedColor(ctx),
               ),
             ),
           ),
@@ -367,7 +367,7 @@ class _BookingTile extends StatelessWidget {
         DialogRoute(
           context: navigator.context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppTheme.cardColor(context),
+            backgroundColor: AppTheme.cardColor(ctx),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -383,7 +383,7 @@ class _BookingTile extends StatelessWidget {
                   child: Text(
                     'Aviso Importante',
                     style: GoogleFonts.rajdhani(
-                      color: AppTheme.textColor(context),
+                      color: AppTheme.textColor(ctx),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -398,7 +398,7 @@ class _BookingTile extends StatelessWidget {
                   ? 'Lo sentimos, ya contamos contigo para este espacio y no es posible cancelar con menos de 3 horas de anticipación.\n\n¡Agradecemos mucho tu comprensión!'
                   : error,
               style: GoogleFonts.dmSans(
-                color: AppTheme.textMutedColor(context),
+                color: AppTheme.textMutedColor(ctx),
                 fontSize: 15,
               ),
             ),

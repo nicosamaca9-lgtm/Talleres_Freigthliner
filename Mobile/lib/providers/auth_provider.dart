@@ -18,6 +18,9 @@ class AuthProvider extends ChangeNotifier {
   int? _userId;
   String? _userName;
   String? _userLastName;
+  String? _correo;
+  String? _telefono;
+  String? _cedula;
 
   AuthProvider({PushNotificationService? pushService})
     : _pushNotificationService = pushService ?? pushNotificationService {
@@ -31,6 +34,9 @@ class AuthProvider extends ChangeNotifier {
   int? get userId => _userId;
   String? get userName => _userName;
   String? get userLastName => _userLastName;
+  String? get correo => _correo;
+  String? get telefono => _telefono;
+  String? get cedula => _cedula;
   bool get isAuthenticated => _token != null;
   UserRole get userRole => UserRole.fromBackendValue(_role);
   bool get isClient => userRole == UserRole.client;
@@ -52,8 +58,11 @@ class AuthProvider extends ChangeNotifier {
     if (_token != null) {
       _role = _extractRoleFromToken(_token!);
       _userId = _extractUserIdFromToken(_token!);
-      _userName = _extractFieldFromToken(_token!, 'nombre');
-      _userLastName = _extractFieldFromToken(_token!, 'apellido');
+      _userName = _extractFieldFromToken(_token!, 'name')?.toString();
+      _userLastName = _extractFieldFromToken(_token!, 'last_name')?.toString();
+      _correo = _extractFieldFromToken(_token!, 'correo')?.toString();
+      _telefono = _extractFieldFromToken(_token!, 'telefono')?.toString();
+      _cedula = _extractFieldFromToken(_token!, 'cedula')?.toString();
     }
     _isInitialized = true;
     notifyListeners();
@@ -67,10 +76,13 @@ class AuthProvider extends ChangeNotifier {
       // Guardar el JWT token
       await SecureStorage.saveToken(response.accessToken);
       _token = response.accessToken;
-      _role = _extractRoleFromToken(response.accessToken);
-      _userId = _extractUserIdFromToken(response.accessToken);
-      _userName = _extractFieldFromToken(response.accessToken, 'nombre');
-      _userLastName = _extractFieldFromToken(response.accessToken, 'apellido');
+      _role = _extractRoleFromToken(_token!);
+      _userId = _extractUserIdFromToken(_token!);
+      _userName = _extractFieldFromToken(_token!, 'name')?.toString();
+      _userLastName = _extractFieldFromToken(_token!, 'last_name')?.toString();
+      _correo = _extractFieldFromToken(_token!, 'correo')?.toString();
+      _telefono = _extractFieldFromToken(_token!, 'telefono')?.toString();
+      _cedula = _extractFieldFromToken(_token!, 'cedula')?.toString();
       unawaited(_pushNotificationService.syncTokenAfterLogin());
       _setLoading(false);
       return true;
@@ -99,6 +111,40 @@ class AuthProvider extends ChangeNotifier {
         telefono: telefono,
         cedula: cedula,
       );
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile({
+    required String nombre,
+    required String apellido,
+    required String telefono,
+    required String cedula,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      final authResponse = await _repository.updateProfile(
+        nombre: nombre,
+        apellido: apellido,
+        telefono: telefono,
+        cedula: cedula,
+      );
+      
+      await SecureStorage.saveToken(authResponse.accessToken);
+      _token = authResponse.accessToken;
+      
+      _userName = _extractFieldFromToken(_token!, 'name')?.toString();
+      _userLastName = _extractFieldFromToken(_token!, 'last_name')?.toString();
+      _correo = _extractFieldFromToken(_token!, 'correo')?.toString();
+      _telefono = _extractFieldFromToken(_token!, 'telefono')?.toString();
+      _cedula = _extractFieldFromToken(_token!, 'cedula')?.toString();
+      
       _setLoading(false);
       return true;
     } catch (e) {
@@ -140,6 +186,9 @@ class AuthProvider extends ChangeNotifier {
     _userId = null;
     _userName = null;
     _userLastName = null;
+    _correo = null;
+    _telefono = null;
+    _cedula = null;
     notifyListeners();
   }
 

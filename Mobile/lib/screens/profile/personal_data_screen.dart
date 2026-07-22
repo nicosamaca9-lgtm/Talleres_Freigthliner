@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import 'package:flutter/services.dart';
 
 class PersonalDataScreen extends StatefulWidget {
   const PersonalDataScreen({super.key});
@@ -19,6 +20,8 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
   late TextEditingController _nombreController;
   late TextEditingController _apellidoController;
   late TextEditingController _correoController;
+  late TextEditingController _telefonoController;
+  late TextEditingController _cedulaController;
 
   @override
   void initState() {
@@ -26,7 +29,9 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     final provider = context.read<AuthProvider>();
     _nombreController = TextEditingController(text: provider.userName ?? '');
     _apellidoController = TextEditingController(text: provider.userLastName ?? '');
-    _correoController = TextEditingController(text: ''); // Not in token by default
+    _correoController = TextEditingController(text: provider.correo ?? '');
+    _telefonoController = TextEditingController(text: provider.telefono ?? '');
+    _cedulaController = TextEditingController(text: provider.cedula ?? '');
   }
 
   @override
@@ -34,6 +39,8 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     _nombreController.dispose();
     _apellidoController.dispose();
     _correoController.dispose();
+    _telefonoController.dispose();
+    _cedulaController.dispose();
     super.dispose();
   }
 
@@ -83,15 +90,53 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     );
   }
 
-  void _actualizarDatos() {
-    // Simular la actualización de datos
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Datos actualizados correctamente'),
-        backgroundColor: AppTheme.green,
-      ),
+  void _actualizarDatos() async {
+    final provider = context.read<AuthProvider>();
+    
+    final nombre = _nombreController.text.trim();
+    final apellido = _apellidoController.text.trim();
+    final telefono = _telefonoController.text.trim();
+    final cedula = _cedulaController.text.trim();
+    
+    if (nombre.isEmpty || apellido.isEmpty || telefono.isEmpty || cedula.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos permitidos'), backgroundColor: AppTheme.errorColor),
+      );
+      return;
+    }
+    
+    if (telefono.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El teléfono debe tener 10 dígitos'), backgroundColor: AppTheme.errorColor),
+      );
+      return;
+    }
+
+    final success = await provider.updateProfile(
+      nombre: nombre,
+      apellido: apellido,
+      telefono: telefono,
+      cedula: cedula,
     );
-    context.pop();
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Datos actualizados correctamente'),
+          backgroundColor: AppTheme.green,
+        ),
+      );
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Error al actualizar perfil'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 
   @override
@@ -136,12 +181,38 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
               controller: _correoController,
               hintText: 'ejemplo@correo.com',
               keyboardType: TextInputType.emailAddress,
+              readOnly: true,
+            ),
+            const SizedBox(height: 16),
+            CustomTextField(
+              label: 'Teléfono',
+              controller: _telefonoController,
+              hintText: 'Tu número de teléfono',
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+            ),
+            const SizedBox(height: 16),
+            CustomTextField(
+              label: 'Cédula / NIT',
+              controller: _cedulaController,
+              hintText: 'Tu documento de identidad',
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
             const SizedBox(height: 32),
-            CustomButton(
-              text: 'Actualizar Información',
-              icon: Icons.save_rounded,
-              onPressed: _showConfirmationDialog,
+            Consumer<AuthProvider>(
+              builder: (context, provider, child) {
+                return provider.isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+                    : CustomButton(
+                        text: 'Actualizar Información',
+                        icon: Icons.save_rounded,
+                        onPressed: _showConfirmationDialog,
+                      );
+              },
             ),
           ],
         ),

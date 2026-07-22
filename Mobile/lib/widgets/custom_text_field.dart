@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final String? errorText;
   final int maxLines;
   final String? Function(String?)? validator;
+  final bool readOnly;
 
   const CustomTextField({
     super.key,
@@ -25,6 +26,7 @@ class CustomTextField extends StatelessWidget {
     this.errorText,
     this.maxLines = 1,
     this.validator,
+    this.readOnly = false,
   });
 
   @override
@@ -48,9 +50,10 @@ class CustomTextField extends StatelessWidget {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           validator: validator,
+          readOnly: readOnly,
           style: GoogleFonts.dmSans(
-            color: AppTheme.textColor(context),
-            fontSize: 13,
+            color: readOnly ? AppTheme.textMutedColor(context) : AppTheme.textColor(context),
+            fontSize: 16,
           ),
           decoration: InputDecoration(
             hintText: hintText,

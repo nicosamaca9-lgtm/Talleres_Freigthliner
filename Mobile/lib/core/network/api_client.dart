@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://192.168.1.19:8000/api/v1';
+  static const String baseUrl = 'http://192.168.1.3:8000/api/v1';
 
   late final Dio dio;
 

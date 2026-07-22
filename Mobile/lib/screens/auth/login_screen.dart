@@ -83,45 +83,70 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } else {
       final errorMessage = provider.errorMessage ?? 'Correo o contraseña incorrectos';
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppTheme.cardColor(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 24),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Error al Iniciar Sesión',
-                  style: GoogleFonts.rajdhani(
-                    color: AppTheme.textColor(context),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+      final isInactive = errorMessage.toLowerCase().contains('no activa') ||
+          errorMessage.toLowerCase().contains('verificación') ||
+          errorMessage.toLowerCase().contains('verificacion');
+
+      if (isInactive) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.email_outlined, color: Colors.white),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Tu cuenta no está activa. Revisa tu correo electrónico (y la carpeta SPAM) para activarla.',
+                    style: TextStyle(color: Colors.white, fontSize: 13),
                   ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppTheme.cardColor(ctx),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error al Iniciar Sesión',
+                    style: GoogleFonts.rajdhani(
+                      color: AppTheme.textColor(ctx),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              errorMessage,
+              style: GoogleFonts.dmSans(
+                color: AppTheme.textMutedColor(ctx),
+                fontSize: 14,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'Intentar de nuevo',
+                  style: GoogleFonts.dmSans(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
-          content: Text(
-            errorMessage,
-            style: GoogleFonts.dmSans(
-              color: AppTheme.textMutedColor(context),
-              fontSize: 14,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                'Intentar de nuevo',
-                style: GoogleFonts.dmSans(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      );
+        );
+      }
       provider.clearError();
     }
   }

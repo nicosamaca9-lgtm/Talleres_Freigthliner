@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str | None = None
     CLOUDINARY_API_SECRET: str | None = None
 
+    # SMTP (correos)
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    BASE_URL: str = "http://localhost:8000"
+
     class Config:
         env_file = ".env"
 

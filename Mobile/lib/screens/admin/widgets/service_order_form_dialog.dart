@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../models/booking_model.dart';
@@ -241,7 +242,20 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                             child: _buildTextField(
                               controller: _placaController,
                               label: 'Placa del Vehículo',
-                              icon: Icons.numbers,
+                              icon: Icons.directions_car,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(6),
+                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                  return newValue.copyWith(text: newValue.text.toUpperCase());
+                                }),
+                              ],
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return 'Requerido';
+                                if (!RegExp(r'^[A-Z]{3}[0-9]{3}$').hasMatch(v)) {
+                                  return 'Debe ser 3 letras y 3 números';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -325,7 +339,15 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(controller: _clienteDocController, label: 'Cédula/NIT', icon: Icons.badge)),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _clienteDocController, 
+                        label: 'Cédula/NIT', 
+                        icon: Icons.badge,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(child: _buildTextField(controller: _clienteTelController, label: 'Teléfono (10 dígitos)', icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) {
                       if (v == null || v.isEmpty) return null; // opcional
@@ -394,11 +416,13 @@ class _ServiceOrderFormDialogState extends State<ServiceOrderFormDialog> {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: GoogleFonts.dmSans(color: AppTheme.textColor(context), fontSize: 14),
       decoration: InputDecoration(
         labelText: label,

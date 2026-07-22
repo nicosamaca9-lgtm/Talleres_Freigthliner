@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Enum, Boolean
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.core.Enum import UserRole
@@ -22,3 +23,5 @@ class User(Base):
         Enum(UserRole, native_enum=False), nullable=False, default=UserRole.client
     )
     especialidad = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    verification_token = Column(String(255), nullable=True, index=True)
