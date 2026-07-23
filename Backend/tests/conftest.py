@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_chat.db")
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
+os.environ.setdefault("DATA_CLEANUP_JOBS_ENABLED", "false")
 
 import pytest
 from fastapi.testclient import TestClient

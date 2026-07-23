@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../providers/booking_provider.dart';
 import '../../../../providers/auth_provider.dart';
+import '../../../../core/booking/booking_time_validator.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../models/booking_model.dart';
 import '../../../../models/vehicle_model.dart';
@@ -15,27 +16,33 @@ class BookingRescheduleDialog extends StatefulWidget {
   const BookingRescheduleDialog({super.key, required this.booking});
 
   @override
-  State<BookingRescheduleDialog> createState() => _BookingRescheduleDialogState();
+  State<BookingRescheduleDialog> createState() =>
+      _BookingRescheduleDialogState();
 }
 
 class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
   final _formKey = GlobalKey<FormState>();
-  
+
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   late TextEditingController _observacionesController;
-  
+
   @override
   void initState() {
     super.initState();
     try {
       _selectedDate = widget.booking.fechaCita;
       final parts = widget.booking.horaCita.split(':');
-      _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      _selectedTime = TimeOfDay(
+        hour: int.parse(parts[0]),
+        minute: int.parse(parts[1]),
+      );
     } catch (e) {
       // Ignorar si hay error de formato inicial
     }
-    _observacionesController = TextEditingController(text: widget.booking.observaciones ?? '');
+    _observacionesController = TextEditingController(
+      text: widget.booking.observaciones ?? '',
+    );
   }
 
   @override
@@ -109,6 +116,20 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
     final userId = context.read<AuthProvider>().userId;
     if (userId == null) return;
 
+    final bookingTimeError = BookingTimeValidator.validate(
+      date: _selectedDate!,
+      time: _selectedTime!,
+    );
+    if (bookingTimeError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(bookingTimeError),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+      return;
+    }
+
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate!);
     final hour = _selectedTime!.hour.toString().padLeft(2, '0');
     final minute = _selectedTime!.minute.toString().padLeft(2, '0');
@@ -133,31 +154,52 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
         ),
       );
     } else {
-      final error = context.read<BookingProvider>().error ?? 'Ocurrió un error inesperado';
-      
+      final error =
+          context.read<BookingProvider>().error ??
+          'Ocurrió un error inesperado';
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: AppTheme.cardColor(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.info_outline_rounded, color: AppTheme.amber, size: 28),
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppTheme.amber,
+                size: 28,
+              ),
               const SizedBox(width: 10),
               Text(
                 'No se pudo reprogramar',
-                style: GoogleFonts.rajdhani(color: AppTheme.textColor(context), fontWeight: FontWeight.bold, fontSize: 20),
+                style: GoogleFonts.rajdhani(
+                  color: AppTheme.textColor(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
             ],
           ),
           content: Text(
             error,
-            style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context), fontSize: 15),
+            style: GoogleFonts.dmSans(
+              color: AppTheme.textMutedColor(context),
+              fontSize: 15,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Entendido', style: GoogleFonts.dmSans(color: AppTheme.green, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Entendido',
+                style: GoogleFonts.dmSans(
+                  color: AppTheme.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -194,7 +236,10 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: AppTheme.textMutedColor(context)),
+                      icon: Icon(
+                        Icons.close,
+                        color: AppTheme.textMutedColor(context),
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -204,31 +249,50 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
                   builder: (context, vehicleProvider, _) {
                     final vehiculo = vehicleProvider.vehicles.firstWhere(
                       (v) => v.idVehiculo == widget.booking.idVehiculo,
-                      orElse: () => VehicleModel(idVehiculo: widget.booking.idVehiculo, placa: 'ID: ${widget.booking.idVehiculo}', marca: '', modelo: '', tipoVehiculo: ''),
+                      orElse: () => VehicleModel(
+                        idVehiculo: widget.booking.idVehiculo,
+                        placa: 'ID: ${widget.booking.idVehiculo}',
+                        marca: '',
+                        modelo: '',
+                        tipoVehiculo: '',
+                      ),
                     );
                     return Text(
                       'Vehículo: ${vehiculo.placa}',
-                      style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context), fontSize: 14),
+                      style: GoogleFonts.dmSans(
+                        color: AppTheme.textMutedColor(context),
+                        fontSize: 14,
+                      ),
                     );
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: Icon(Icons.calendar_today, color: AppTheme.textMutedColor(context), size: 18),
+                        icon: Icon(
+                          Icons.calendar_today,
+                          color: AppTheme.textMutedColor(context),
+                          size: 18,
+                        ),
                         label: Text(
-                          _selectedDate == null 
-                            ? 'Fecha' 
-                            : DateFormat('dd/MM/yyyy').format(_selectedDate!),
-                          style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
+                          _selectedDate == null
+                              ? 'Fecha'
+                              : DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                          style: GoogleFonts.dmSans(
+                            color: AppTheme.textColor(context),
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: AppTheme.borderColor(context)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           backgroundColor: AppTheme.inputColor(context),
                         ),
                         onPressed: _pickDate,
@@ -237,17 +301,27 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: Icon(Icons.access_time, color: AppTheme.textMutedColor(context), size: 18),
+                        icon: Icon(
+                          Icons.access_time,
+                          color: AppTheme.textMutedColor(context),
+                          size: 18,
+                        ),
                         label: Text(
-                          _selectedTime == null 
-                            ? 'Hora' 
-                            : _selectedTime!.format(context),
-                          style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
+                          _selectedTime == null
+                              ? 'Hora'
+                              : _selectedTime!.format(context),
+                          style: GoogleFonts.dmSans(
+                            color: AppTheme.textColor(context),
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: AppTheme.borderColor(context)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           backgroundColor: AppTheme.inputColor(context),
                         ),
                         onPressed: _pickTime,
@@ -260,12 +334,15 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       'Requeridos',
-                      style: GoogleFonts.dmSans(color: AppTheme.red, fontSize: 12),
+                      style: GoogleFonts.dmSans(
+                        color: AppTheme.red,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 TextFormField(
                   controller: _observacionesController,
                   style: GoogleFonts.dmSans(color: AppTheme.textColor(context)),
@@ -273,30 +350,37 @@ class _BookingRescheduleDialogState extends State<BookingRescheduleDialog> {
                   decoration: InputDecoration(
                     labelText: 'Observaciones / Falla del vehículo',
                     alignLabelWithHint: true,
-                    labelStyle: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context)),
+                    labelStyle: GoogleFonts.dmSans(
+                      color: AppTheme.textMutedColor(context),
+                    ),
                     filled: true,
                     fillColor: AppTheme.inputColor(context),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppTheme.borderColor(context)),
+                      borderSide: BorderSide(
+                        color: AppTheme.borderColor(context),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: AppTheme.green),
                     ),
                   ),
-                  validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Requerido' : null,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 SizedBox(
                   width: double.infinity,
                   child: Consumer<BookingProvider>(
                     builder: (context, provider, child) {
                       if (provider.isLoading) {
                         return const Center(
-                          child: CircularProgressIndicator(color: AppTheme.green),
+                          child: CircularProgressIndicator(
+                            color: AppTheme.green,
+                          ),
                         );
                       }
                       return ElevatedButton(

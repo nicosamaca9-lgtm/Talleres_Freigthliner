@@ -1,8 +1,12 @@
+import random
+import string
 import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from fastapi import BackgroundTasks, HTTPException, status
 
 from app.core.security import verify_password, create_access_token, hash_password
+from app.db.session import SessionLocal
 from app.repositories.UserRepository import (
     get_user_by_email,
     create_user,
@@ -12,6 +16,13 @@ from app.models.UserEntity import User
 from app.core.Enum import UserRole
 from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
 from app.schemas.AuthSchema import LoginRequest, ClientRegister
+from app.services.EmailService import send_password_recovery_email
+
+
+PASSWORD_RECOVERY_GENERIC_MESSAGE = (
+    "Si el correo está registrado, se ha enviado un código de recuperación."
+)
+PASSWORD_RECOVERY_EMAIL_NOT_FOUND_MESSAGE = "El correo no existe"
 
 
 def authenticate_user(db: Session, correo: str, password: str) -> User | None:
@@ -56,6 +67,52 @@ def login_user(db: Session, data: LoginRequest):
         "access_token": access_token,
         "token_type": "bearer",
     }
+
+
+def request_password_recovery(
+    db: Session,
+    correo: str,
+    background_tasks: BackgroundTasks | None = None,
+):
+    """Solicita recuperacion y valida que el correo exista."""
+    normalized_email = correo.strip()
+    user_id = (
+        db.query(User.id_usuario)
+        .filter(User.correo == normalized_email)
+        .scalar()
+    )
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=PASSWORD_RECOVERY_EMAIL_NOT_FOUND_MESSAGE,
+        )
+
+    if background_tasks is not None:
+        background_tasks.add_task(_complete_password_recovery, user_id)
+    else:
+        _complete_password_recovery(user_id)
+
+    return {"message": PASSWORD_RECOVERY_GENERIC_MESSAGE}
+
+
+def _complete_password_recovery(user_id: int):
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id_usuario == user_id).first()
+        if not user:
+            return
+
+        pin = ''.join(random.choices(string.digits, k=6))
+        user.verification_token = pin
+        db.commit()
+
+        try:
+            send_password_recovery_email(user.correo, pin)
+        except Exception as error:
+            print(f"[AuthService] No se pudo enviar el correo de recuperacion: {error}")
+    finally:
+        db.close()
 
 
 def register_client(db: Session, data: ClientRegister):

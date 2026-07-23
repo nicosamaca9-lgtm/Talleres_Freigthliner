@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     # Firebase
     FIREBASE_CREDENTIALS_JSON: str | None = None
 
+    # Limpieza automatica de datos
+    DATA_CLEANUP_JOBS_ENABLED: bool = True
+    DATA_CLEANUP_RETENTION_DAYS: int = 30
+    DATA_CLEANUP_BATCH_SIZE: int = 500
+    DATA_CLEANUP_SCHEDULER_TIMEZONE: str = "America/Bogota"
+    DATA_CLEANUP_MESSAGES_CRON_HOUR: int = 3
+    DATA_CLEANUP_MESSAGES_CRON_MINUTE: int = 0
+
     # Cloudinary
     CLOUDINARY_CLOUD_NAME: str | None = None
     CLOUDINARY_API_KEY: str | None = None

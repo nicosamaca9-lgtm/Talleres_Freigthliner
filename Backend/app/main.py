@@ -9,6 +9,7 @@ import os
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.db.session import engine
+from app.services.CleanupScheduler import start_cleanup_scheduler, stop_cleanup_scheduler
 
 import codecs
 # Fuerza a que los errores de decodificación reemplacen el caracter en vez de romper la app
@@ -24,8 +25,10 @@ async def lifespan(app: FastAPI):
     except Exception as error:
         print(f"[ERROR] Error al conectar con PostgreSQL: {error}")
         raise
+    start_cleanup_scheduler()
     yield
     # Shutdown
+    stop_cleanup_scheduler()
     engine.dispose()
 
 

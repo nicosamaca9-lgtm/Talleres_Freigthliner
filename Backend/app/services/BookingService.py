@@ -6,6 +6,7 @@ from app.models.BookingEntity import Booking, ConfirmationState
 from app.models.ServiceOrderEntity import ServiceOrder, ServiceOrderState
 from app.models.UserEntity import User
 from app.schemas.BookingSchema import BookingCreate, BookingUpdate
+from app.services.BookingValidationService import BookingValidationService
 from app.services.NotificationService import NotificationService, NotificationType
 
 class BookingService:
@@ -14,6 +15,11 @@ class BookingService:
     def create_booking(db: Session, booking_data: BookingCreate, background_tasks=None):
         """Crea un nuevo agendamiento en la base de datos aplicando reglas de negocio"""
         # Validar max 10 agendamientos por día
+        BookingValidationService.validate_booking_time(
+            fecha_cita=booking_data.fecha_cita,
+            hora_cita=booking_data.hora_cita,
+        )
+
         daily_bookings_count = db.query(Booking).filter(Booking.fecha_cita == booking_data.fecha_cita).count()
         if daily_bookings_count >= 10:
             raise HTTPException(
@@ -186,6 +192,11 @@ class BookingService:
                 status_code=403, 
                 detail="Lo sentimos, ya contamos con usted para este espacio. No es posible reprogramar ni cancelar con menos de 3 horas de anticipación."
             )
+
+        BookingValidationService.validate_booking_time(
+            fecha_cita=booking_data.fecha_cita,
+            hora_cita=booking_data.hora_cita,
+        )
 
         schedule_changed = (
             db_booking.fecha_cita != booking_data.fecha_cita

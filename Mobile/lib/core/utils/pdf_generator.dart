@@ -1,13 +1,26 @@
-import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../models/service_order_model.dart';
 import '../../models/user_model.dart';
+import 'report_assets.dart';
 
 class PdfGenerator {
-  static Future<void> generateServiceOrderPdf(ServiceOrderModel order, UserModel? mechanic) async {
+  static Future<void> generateServiceOrderPdf(
+    ServiceOrderModel order,
+    UserModel? mechanic,
+  ) async {
     final pdf = pw.Document();
+    final report = ReportAssetParser.parse(order.informeTrabajo);
+    final reportImages = <pw.ImageProvider>[];
+
+    for (final url in report.imageUrls) {
+      try {
+        reportImages.add(await networkImage(url));
+      } catch (_) {
+        // El PDF no debe fallar si una imagen remota deja de estar disponible.
+      }
+    }
 
     pdf.addPage(
       pw.Page(
@@ -21,14 +34,29 @@ class PdfGenerator {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('TF CENTRO AUTOMOTRIZ', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                    pw.Text('Orden: ${order.numeroOrden}', style: pw.TextStyle(fontSize: 20)),
+                    pw.Text(
+                      'TF CENTRO AUTOMOTRIZ',
+                      style: pw.TextStyle(
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      'Orden: ${order.numeroOrden}',
+                      style: pw.TextStyle(fontSize: 20),
+                    ),
                   ],
                 ),
               ),
               pw.SizedBox(height: 20),
-              
-              pw.Text('Datos del Cliente', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+
+              pw.Text(
+                'Datos del Cliente',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               pw.Divider(),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -36,64 +64,151 @@ class PdfGenerator {
                   pw.Text('Nombre: ${order.clienteNombre}'),
                   pw.Text('Identificación: ${order.clienteIdentificacion}'),
                   pw.Text('Teléfono: ${order.clienteTelefono}'),
-                ]
+                ],
               ),
               if (order.conductorNombre != null) ...[
                 pw.SizedBox(height: 10),
-                pw.Text('Conductor: ${order.conductorNombre} (Tel: ${order.conductorTelefono ?? "N/A"})'),
+                pw.Text(
+                  'Conductor: ${order.conductorNombre} (Tel: ${order.conductorTelefono ?? "N/A"})',
+                ),
               ],
               pw.SizedBox(height: 20),
 
-              pw.Text('Datos del Vehículo y Recepción', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                'Datos del Vehículo y Recepción',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               pw.Divider(),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Placa: ${order.placaVehiculo ?? "N/A"} - Marca: ${order.marcaVehiculo ?? "N/A"}'),
+                  pw.Text(
+                    'Placa: ${order.placaVehiculo ?? "N/A"} - Marca: ${order.marcaVehiculo ?? "N/A"}',
+                  ),
                   pw.Text('Kilometraje: ${order.kilometrajeIngreso} km'),
                   pw.Text('Combustible: ${order.nivelCombustible}'),
-                ]
+                ],
               ),
               pw.SizedBox(height: 10),
-              pw.Text('Fecha de Ingreso: ${order.fechaIngreso} ${order.horaIngreso}'),
+              pw.Text(
+                'Fecha de Ingreso: ${order.fechaIngreso} ${order.horaIngreso}',
+              ),
               pw.SizedBox(height: 20),
 
-              pw.Text('Diagnóstico / Trabajos Solicitados', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                'Diagnóstico / Trabajos Solicitados',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               pw.Divider(),
               pw.Text(order.trabajosARealizar),
               pw.SizedBox(height: 20),
 
-              pw.Text('Informe Técnico (Mecánico)', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.Text(
+                'Informe Técnico (Mecánico)',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
               pw.Divider(),
-              pw.Text('Mecánico asignado: ${mechanic?.nombreCompleto ?? order.mecanicoNombre ?? "No asignado"}'),
+              pw.Text(
+                'Mecánico asignado: ${mechanic?.nombreCompleto ?? order.mecanicoNombre ?? "No asignado"}',
+              ),
               pw.SizedBox(height: 10),
-              pw.Text(order.informeTrabajo ?? 'Sin informe registrado.'),
-              
+              pw.Text(
+                report.text.isEmpty ? 'Sin informe registrado.' : report.text,
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                report.hasImages
+                    ? 'Imagenes adjuntas: ${report.imageUrls.length}'
+                    : 'Imagenes adjuntas: No',
+                style: const pw.TextStyle(color: PdfColors.grey700),
+              ),
+
               pw.Spacer(),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
                   pw.Column(
                     children: [
-                      pw.Container(width: 150, height: 1, color: PdfColors.black),
+                      pw.Container(
+                        width: 150,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
                       pw.SizedBox(height: 5),
                       pw.Text('Firma Administrador'),
-                    ]
+                    ],
                   ),
                   pw.Column(
                     children: [
-                      pw.Container(width: 150, height: 1, color: PdfColors.black),
+                      pw.Container(
+                        width: 150,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
                       pw.SizedBox(height: 5),
                       pw.Text('Firma Cliente / Conductor'),
-                    ]
+                    ],
                   ),
-                ]
+                ],
               ),
             ],
           );
         },
       ),
     );
+
+    if (reportImages.isNotEmpty) {
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) => [
+            pw.Text(
+              'Imagenes adjuntas',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 12),
+            pw.Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: reportImages.asMap().entries.map((entry) {
+                return pw.Container(
+                  width: 250,
+                  height: 220,
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey400),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Imagen ${entry.key + 1}',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Expanded(
+                        child: pw.Center(
+                          child: pw.Image(entry.value, fit: pw.BoxFit.contain),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    }
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
@@ -103,17 +218,19 @@ class PdfGenerator {
 
   static Future<void> generateReceiptPdf(Map<String, dynamic> receipt) async {
     final pdf = pw.Document();
-    
+
     final items = (receipt['items'] as List<dynamic>?) ?? [];
     final List<List<String>> itemsData = [
       ['DESCRIPCION', 'CANTIDAD', 'VALOR UNT', 'IVA', 'TOTAL'],
-      ...items.map((i) => [
-        i['descripcion']?.toString().toUpperCase() ?? '',
-        i['cantidad']?.toString() ?? '0',
-        i['valor_unitario']?.toString() ?? '0',
-        '${i['porcentaje_iva']}%',
-        i['total']?.toString() ?? '0',
-      ])
+      ...items.map(
+        (i) => [
+          i['descripcion']?.toString().toUpperCase() ?? '',
+          i['cantidad']?.toString() ?? '0',
+          i['valor_unitario']?.toString() ?? '0',
+          '${i['porcentaje_iva']}%',
+          i['total']?.toString() ?? '0',
+        ],
+      ),
     ];
 
     pdf.addPage(
@@ -128,8 +245,21 @@ class PdfGenerator {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('TF CENTRO AUTOMOTRIZ', style: pw.TextStyle(color: PdfColors.black, fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                    pw.Text('${receipt['tipo_documento']} ${receipt['numero_recibo']}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    pw.Text(
+                      'TF CENTRO AUTOMOTRIZ',
+                      style: pw.TextStyle(
+                        color: PdfColors.black,
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '${receipt['tipo_documento']} ${receipt['numero_recibo']}',
+                      style: pw.TextStyle(
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -141,11 +271,31 @@ class PdfGenerator {
                 cellAlignment: pw.Alignment.centerLeft,
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: <List<String>>[
-                  ['CLIENTE', receipt['cliente_nombre'] ?? '', 'POR CONCEPTO DE'],
-                  ['NIT/C.C', receipt['cliente_nit'] ?? '', receipt['concepto']?.toString().toUpperCase() ?? ''],
-                  ['DIRECCION', receipt['cliente_direccion'] ?? '', 'FECHA DOC: ${receipt['fecha_emision']?.split('T')[0] ?? ''}'],
-                  ['CIUDAD', receipt['cliente_ciudad'] ?? '', 'PLACA: ${receipt['placa'] ?? ''}'],
-                  ['TELEFONO', receipt['cliente_telefono'] ?? '', 'VENDEDOR: ${receipt['vendedor'] ?? ''}'],
+                  [
+                    'CLIENTE',
+                    receipt['cliente_nombre'] ?? '',
+                    'POR CONCEPTO DE',
+                  ],
+                  [
+                    'NIT/C.C',
+                    receipt['cliente_nit'] ?? '',
+                    receipt['concepto']?.toString().toUpperCase() ?? '',
+                  ],
+                  [
+                    'DIRECCION',
+                    receipt['cliente_direccion'] ?? '',
+                    'FECHA DOC: ${receipt['fecha_emision']?.split('T')[0] ?? ''}',
+                  ],
+                  [
+                    'CIUDAD',
+                    receipt['cliente_ciudad'] ?? '',
+                    'PLACA: ${receipt['placa'] ?? ''}',
+                  ],
+                  [
+                    'TELEFONO',
+                    receipt['cliente_telefono'] ?? '',
+                    'VENDEDOR: ${receipt['vendedor'] ?? ''}',
+                  ],
                   ['CORREO', receipt['cliente_correo'] ?? '', ''],
                 ],
               ),
@@ -153,7 +303,9 @@ class PdfGenerator {
               pw.Table.fromTextArray(
                 context: context,
                 border: pw.TableBorder.all(color: PdfColors.black, width: 1),
-                headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.grey300,
+                ),
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 data: itemsData,
               ),
@@ -161,16 +313,25 @@ class PdfGenerator {
               pw.Align(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Text(
-                  'SUBTOTAL: \$${receipt['subtotal']}\nIVA: \$${receipt['iva_total']}\nTOTAL: \$${receipt['total']}', 
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)
+                  'SUBTOTAL: \$${receipt['subtotal']}\nIVA: \$${receipt['iva_total']}\nTOTAL: \$${receipt['total']}',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               pw.SizedBox(height: 40),
-              pw.Text('NOTA: ${receipt['nota_pie'] ?? ''}', style: const pw.TextStyle(fontSize: 10)),
+              pw.Text(
+                'NOTA: ${receipt['nota_pie'] ?? ''}',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
               pw.SizedBox(height: 10),
               pw.Text(
-                'GARANTÍA: La garantía tiene una vigencia máxima de 30 días o 3,000 kilómetros (lo que ocurra primero) tras la entrega del vehículo. Aplica únicamente para la mano de obra y repuestos suministrados por el taller. No cubre piezas eléctricas ni daños por mal uso.', 
-                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                'GARANTÍA: La garantía tiene una vigencia máxima de 30 días o 3,000 kilómetros (lo que ocurra primero) tras la entrega del vehículo. Aplica únicamente para la mano de obra y repuestos suministrados por el taller. No cubre piezas eléctricas ni daños por mal uso.',
+                style: const pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColors.grey700,
+                ),
                 textAlign: pw.TextAlign.justify,
               ),
               pw.Spacer(),
@@ -179,19 +340,27 @@ class PdfGenerator {
                 children: [
                   pw.Column(
                     children: [
-                      pw.Container(width: 150, height: 1, color: PdfColors.black),
+                      pw.Container(
+                        width: 150,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
                       pw.SizedBox(height: 5),
                       pw.Text('Aceptado (Cliente)'),
-                    ]
+                    ],
                   ),
                   pw.Column(
                     children: [
-                      pw.Container(width: 150, height: 1, color: PdfColors.black),
+                      pw.Container(
+                        width: 150,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
                       pw.SizedBox(height: 5),
                       pw.Text('Firma Autorizada'),
-                    ]
+                    ],
                   ),
-                ]
+                ],
               ),
             ],
           );

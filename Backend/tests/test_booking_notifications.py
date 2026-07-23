@@ -28,7 +28,7 @@ def booking_payload(*, user_id: int, vehicle_id: int) -> BookingCreate:
         id_usuario=user_id,
         id_vehiculo=vehicle_id,
         fecha_solicitud=date(2026, 7, 20),
-        fecha_cita=date(2026, 7, 22),
+        fecha_cita=future_date(2),
         hora_cita=time(14, 30),
         observaciones="Revision general",
     )
@@ -87,12 +87,12 @@ def test_create_booking_notifies_admins_with_context(db, monkeypatch):
     assert calls[0]["title"] == "Nueva cita agendada"
     assert "Cliente User" in calls[0]["body"]
     assert "ABC001" in calls[0]["body"]
-    assert "2026-07-22" in calls[0]["body"]
+    assert booking.fecha_cita.isoformat() in calls[0]["body"]
     assert "14:30" in calls[0]["body"]
     assert calls[0]["data"] == {
         "type": "booking_created",
         "booking_id": str(booking.id_agendamiento),
-        "booking_date": "2026-07-22",
+        "booking_date": booking.fecha_cita.isoformat(),
     }
     assert calls[0]["background_tasks"] is background_tasks
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/admin_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/report_assets.dart';
 
 class AdminVehiclesTab extends StatefulWidget {
   const AdminVehiclesTab({super.key});
@@ -35,17 +36,26 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
                   decoration: InputDecoration(
                     labelText: 'Buscar por Placa',
                     hintText: 'Ej: ABC-123',
-                    labelStyle: TextStyle(color: AppTheme.textMutedColor(context)),
-                    prefixIcon: Icon(Icons.search, color: AppTheme.textMutedColor(context)),
+                    labelStyle: TextStyle(
+                      color: AppTheme.textMutedColor(context),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AppTheme.textMutedColor(context),
+                    ),
                     filled: true,
                     fillColor: AppTheme.inputColor(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.borderColor(context)),
+                      borderSide: BorderSide(
+                        color: AppTheme.borderColor(context),
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.borderColor(context)),
+                      borderSide: BorderSide(
+                        color: AppTheme.borderColor(context),
+                      ),
                     ),
                   ),
                   onSubmitted: (_) => _search(),
@@ -55,10 +65,19 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                 ),
                 onPressed: _search,
-                child: const Text('Buscar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Buscar',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -89,8 +108,10 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
               }
 
               final vehiculoData = provider.vehicleHistory!['vehiculo'];
-              final ordenesData = provider.vehicleHistory!['ordenes'] as List<dynamic>? ?? [];
-              final recibosData = provider.vehicleHistory!['recibos'] as List<dynamic>? ?? [];
+              final ordenesData =
+                  provider.vehicleHistory!['ordenes'] as List<dynamic>? ?? [];
+              final recibosData =
+                  provider.vehicleHistory!['recibos'] as List<dynamic>? ?? [];
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -114,12 +135,35 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Divider(color: AppTheme.borderColor(context), height: 24),
-                          _buildInfoRow(context, 'Placa', vehiculoData['placa']),
-                          _buildInfoRow(context, 'Marca', vehiculoData['marca']),
-                          _buildInfoRow(context, 'Modelo', vehiculoData['modelo']),
-                          _buildInfoRow(context, 'Color', vehiculoData['color']),
-                          _buildInfoRow(context, 'Tipo', vehiculoData['tipo_vehiculo']),
+                          Divider(
+                            color: AppTheme.borderColor(context),
+                            height: 24,
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Placa',
+                            vehiculoData['placa'],
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Marca',
+                            vehiculoData['marca'],
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Modelo',
+                            vehiculoData['modelo'],
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Color',
+                            vehiculoData['color'],
+                          ),
+                          _buildInfoRow(
+                            context,
+                            'Tipo',
+                            vehiculoData['tipo_vehiculo'],
+                          ),
                         ],
                       ),
                     ),
@@ -145,20 +189,31 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
                         color: AppTheme.cardColor(context),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: AppTheme.borderColor(context)),
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
+                          ),
                         ),
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
                           title: Text(
                             'Orden #${orden['id_orden']} - ${orden['estado_orden']}',
-                            style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           subtitle: Text(
                             'Fecha Ingreso: ${orden['fecha_ingreso']}\nCliente: ${orden['cliente_nombre']}',
-                            style: TextStyle(color: AppTheme.textMutedColor(context)),
+                            style: TextStyle(
+                              color: AppTheme.textMutedColor(context),
+                            ),
                           ),
                           isThreeLine: true,
-                          trailing: Icon(Icons.arrow_forward_ios, color: AppTheme.textMutedColor(context), size: 16),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            color: AppTheme.textMutedColor(context),
+                            size: 16,
+                          ),
                           onTap: () {
                             _showOrderDetails(context, orden);
                           },
@@ -181,22 +236,29 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
                         color: AppTheme.cardColor(context),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: AppTheme.borderColor(context)),
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
+                          ),
                         ),
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
                           title: Text(
                             '${recibo['tipo_documento']} #${recibo['numero_recibo']}',
-                            style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           subtitle: Text(
                             'Total: \$${recibo['total']} - ${recibo['estado']}',
-                            style: TextStyle(color: AppTheme.textMutedColor(context)),
+                            style: TextStyle(
+                              color: AppTheme.textMutedColor(context),
+                            ),
                           ),
                         ),
                       );
                     }),
-                  ]
+                  ],
                 ],
               );
             },
@@ -214,10 +276,16 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
         children: [
           Text(
             '$label: ',
-            style: TextStyle(color: AppTheme.textMutedColor(context), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppTheme.textMutedColor(context),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Expanded(
-            child: Text(value, style: TextStyle(color: AppTheme.textColor(context))),
+            child: Text(
+              value,
+              style: TextStyle(color: AppTheme.textColor(context)),
+            ),
           ),
         ],
       ),
@@ -225,11 +293,18 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
   }
 
   void _showOrderDetails(BuildContext context, dynamic orden) {
+    final report = ReportAssetParser.parse(
+      orden['informe_trabajo']?.toString(),
+    );
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor(context),
-        title: Text('Orden #${orden['id_orden']}', style: TextStyle(color: AppTheme.textColor(context))),
+        title: Text(
+          'Orden #${orden['id_orden']}',
+          style: TextStyle(color: AppTheme.textColor(context)),
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,28 +312,101 @@ class _AdminVehiclesTabState extends State<AdminVehiclesTab> {
             children: [
               _buildInfoRow(context, 'Cliente', orden['cliente_nombre']),
               _buildInfoRow(context, 'Teléfono', orden['cliente_telefono']),
-              _buildInfoRow(context, 'Conductor', orden['conductor_nombre'] ?? 'No especificado'),
+              _buildInfoRow(
+                context,
+                'Conductor',
+                orden['conductor_nombre'] ?? 'No especificado',
+              ),
               Divider(color: AppTheme.borderColor(context)),
-              _buildInfoRow(context, 'Ingreso', '${orden['fecha_ingreso']} ${orden['hora_ingreso']}'),
-              _buildInfoRow(context, 'Salida', '${orden['fecha_salida'] ?? 'N/A'} ${orden['hora_salida'] ?? 'N/A'}'),
+              _buildInfoRow(
+                context,
+                'Ingreso',
+                '${orden['fecha_ingreso']} ${orden['hora_ingreso']}',
+              ),
+              _buildInfoRow(
+                context,
+                'Salida',
+                '${orden['fecha_salida'] ?? 'N/A'} ${orden['hora_salida'] ?? 'N/A'}',
+              ),
               Divider(color: AppTheme.borderColor(context)),
-              _buildInfoRow(context, 'Kilometraje', orden['kilometraje_ingreso'].toString()),
+              _buildInfoRow(
+                context,
+                'Kilometraje',
+                orden['kilometraje_ingreso'].toString(),
+              ),
               _buildInfoRow(context, 'Combustible', orden['nivel_combustible']),
               Divider(color: AppTheme.borderColor(context)),
-              Text('Trabajos a realizar:', style: TextStyle(color: AppTheme.textMutedColor(context), fontWeight: FontWeight.bold)),
-              Text(orden['trabajos_a_realizar'] ?? '', style: TextStyle(color: AppTheme.textColor(context))),
+              Text(
+                'Trabajos a realizar:',
+                style: TextStyle(
+                  color: AppTheme.textMutedColor(context),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                orden['trabajos_a_realizar'] ?? '',
+                style: TextStyle(color: AppTheme.textColor(context)),
+              ),
               const SizedBox(height: 8),
-              Text('Informe del Mecánico:', style: TextStyle(color: AppTheme.textMutedColor(context), fontWeight: FontWeight.bold)),
-              Text(orden['informe_trabajo'] ?? 'Sin informe', style: TextStyle(color: AppTheme.textColor(context))),
+              Text(
+                'Informe del Mecánico:',
+                style: TextStyle(
+                  color: AppTheme.textMutedColor(context),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                report.text.isEmpty ? 'Sin informe' : report.text,
+                style: TextStyle(color: AppTheme.textColor(context)),
+              ),
+              _buildImageSummary(context, report.imageUrls.length),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cerrar', style: TextStyle(color: AppTheme.textMutedColor(context))),
+            child: Text(
+              'Cerrar',
+              style: TextStyle(color: AppTheme.textMutedColor(context)),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImageSummary(BuildContext context, int imageCount) {
+    final hasImages = imageCount > 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.inputColor(context),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.borderColor(context)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasImages ? Icons.image_outlined : Icons.hide_image_outlined,
+              size: 16,
+              color: AppTheme.textMutedColor(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              hasImages ? 'Tiene imagenes ($imageCount)' : 'Sin imagenes',
+              style: TextStyle(
+                color: AppTheme.textMutedColor(context),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

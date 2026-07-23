@@ -9,6 +9,7 @@ class Message(Base):
     __tablename__ = "messages"
     __table_args__ = (
         Index('ix_messages_sender_receiver', 'sender_id', 'receiver_id'),
+        Index("ix_messages_timestamp", "timestamp"),
     )
 
     id = Column(Integer, primary_key=True, index=True)

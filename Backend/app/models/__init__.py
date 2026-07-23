@@ -9,3 +9,4 @@ from app.models.CommentEntity import Comment
 from app.models.ReceiptEntity import Receipt, ReceiptItem
 from app.models.MessageEntity import Message
 from app.models.DeviceTokenEntity import DeviceToken
+from app.models.CleanupAuditLogEntity import CleanupAuditLog

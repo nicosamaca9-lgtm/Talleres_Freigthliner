@@ -1,23 +1,28 @@
-# app/Api/v1/endpoints/AuthEndpoint.py
-
-from fastapi import APIRouter, Depends, status, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
-from app.schemas.AuthSchema import ClientRegister, LoginRequest, TokenResponse, ChangePasswordRequest, UpdateProfileRequest
-from app.schemas.UserSchema import UserResponse
-from app.services.AuthService import register_client, login_user, change_password, update_profile
 from app.api.deps import get_current_user
-from app.services.EmailService import send_password_recovery_email
-from pydantic import BaseModel
-import random
-import string
+from app.core.Exceptions import InvalidCredentialsError, UserAlreadyExistsError
+from app.db.session import get_db
 from app.models.UserEntity import User
-
-
-from app.core.Exceptions import UserAlreadyExistsError, InvalidCredentialsError
-from sqlalchemy.exc import IntegrityError
+from app.schemas.AuthSchema import (
+    ChangePasswordRequest,
+    ClientRegister,
+    LoginRequest,
+    TokenResponse,
+    UpdateProfileRequest,
+)
+from app.schemas.UserSchema import UserResponse
+from app.services.AuthService import (
+    change_password,
+    login_user,
+    register_client,
+    request_password_recovery,
+    update_profile,
+)
 
 
 router = APIRouter()
@@ -60,46 +65,41 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 class ForgotPasswordRequest(BaseModel):
     correo: str
 
+
 class ResetPasswordRequest(BaseModel):
     correo: str
     codigo: str
     nueva_password: str
 
-@router.post("/forgot-password")
-def forgot_password(data: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.correo == data.correo).first()
-    if not user:
-        # Prevent email enumeration by returning a generic success message
-        return {"message": "Si el correo está registrado, se ha enviado un código de recuperación."}
-    
-    # Generate 6-digit PIN
-    pin = ''.join(random.choices(string.digits, k=6))
-    user.verification_token = pin
-    db.commit()
 
-    # Send email
-    background_tasks.add_task(send_password_recovery_email, user.correo, pin)
-    return {"message": "Si el correo está registrado, se ha enviado un código de recuperación."}
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    return request_password_recovery(db, data.correo, background_tasks)
 
 
 @router.post("/reset-password")
 def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     from app.core.security import hash_password
+
     user = db.query(User).filter(User.correo == data.correo).first()
     if not user or user.verification_token != data.codigo:
         raise HTTPException(status_code=400, detail="Código inválido o expirado.")
-    
-    # Reset password
+
     user.password_hash = hash_password(data.nueva_password)
-    user.verification_token = None  # Clear PIN
+    user.verification_token = None
     db.commit()
     return {"message": "Contraseña actualizada exitosamente."}
+
 
 @router.post("/change-password")
 def change_password_endpoint(
     data: ChangePasswordRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         return change_password(db, current_user, data.old_password, data.new_password)
@@ -114,7 +114,7 @@ def change_password_endpoint(
 def update_profile_endpoint(
     data: UpdateProfileRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     try:
         return update_profile(db, current_user, data)
@@ -141,7 +141,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
                 <p style='color:#888;font-size:13px;'>Si ya activaste tu cuenta, puedes cerrar esta ventana.</p>
               </div>
             </body></html>""",
-            status_code=400
+            status_code=400,
         )
 
     if user.is_active:

@@ -18,23 +18,41 @@ class ForgotPasswordDialog extends StatefulWidget {
 class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  String? _emailError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_clearEmailError);
+  }
 
   @override
   void dispose() {
+    _emailController.removeListener(_clearEmailError);
     _emailController.dispose();
     super.dispose();
   }
 
+  void _clearEmailError() {
+    if (_emailError == null) return;
+    setState(() {
+      _emailError = null;
+    });
+  }
+
   Future<void> _submit() async {
+    setState(() {
+      _emailError = null;
+    });
     if (!_formKey.currentState!.validate()) return;
-    
+
     final email = _emailController.text.trim();
     final provider = context.read<AuthProvider>();
-    
+
     final success = await provider.forgotPassword(email);
-    
+
     if (!mounted) return;
-    
+
     if (success) {
       Navigator.pop(context);
       showDialog(
@@ -42,9 +60,17 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
         builder: (_) => ResetPasswordDialog(email: email),
       );
     } else {
+      if (provider.errorMessage == 'El correo no existe') {
+        setState(() {
+          _emailError = provider.errorMessage;
+        });
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.errorMessage ?? 'Error al solicitar recuperación'),
+          content: Text(
+            provider.errorMessage ?? 'Error al solicitar recuperación',
+          ),
           backgroundColor: AppTheme.red,
         ),
       );
@@ -54,7 +80,7 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthProvider>().isLoading;
-    
+
     return Dialog(
       backgroundColor: AppTheme.cardColor(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -88,25 +114,33 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
                 controller: _emailController,
                 hintText: 'ejemplo@correo.com',
                 keyboardType: TextInputType.emailAddress,
+                errorText: _emailError,
                 validator: (val) {
-                  if (val == null || val.isEmpty) return 'El correo es requerido';
+                  if (val == null || val.isEmpty)
+                    return 'El correo es requerido';
                   if (!val.contains('@')) return 'Correo inválido';
                   return null;
                 },
               ),
               const SizedBox(height: 24),
               isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
-                  : CustomButton(
-                      text: 'Enviar Código',
-                      onPressed: _submit,
-                    ),
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryColor,
+                      ),
+                    )
+                  : CustomButton(text: 'Enviar Código', onPressed: _submit),
               const SizedBox(height: 10),
               if (!isLoading)
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancelar', style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(context))),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.dmSans(
+                        color: AppTheme.textMutedColor(context),
+                      ),
+                    ),
                   ),
                 ),
             ],

@@ -8,6 +8,7 @@ import '../../../models/user_model.dart';
 import '../../../models/user_role.dart';
 import 'service_order_form_dialog.dart';
 import '../../../core/utils/pdf_generator.dart';
+import '../../../core/utils/report_assets.dart';
 
 class AdminOrdersTab extends StatefulWidget {
   const AdminOrdersTab({super.key});
@@ -235,24 +236,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
             if (hasReport) ...[
               Builder(
                 builder: (context) {
-                  final rawText = order.informeTrabajo!;
-                  // Parse out images from [IMAGENES]...[/IMAGENES] markers
-                  String displayText = rawText;
-                  List<String> imageUrls = [];
-
-                  final imgRegex = RegExp(r'\[IMAGENES\](.*?)\[/IMAGENES\]');
-                  final match = imgRegex.firstMatch(rawText);
-                  if (match != null) {
-                    final imagesCsv = match.group(1) ?? '';
-                    imageUrls = imagesCsv
-                        .split(',')
-                        .where((u) => u.trim().isNotEmpty)
-                        .toList();
-                    displayText = rawText.replaceAll(imgRegex, '').trim();
-                  }
-
-                  // Build the base URL for images (strip /api/v1 from the API base)
-                  const apiBase = 'http://192.168.1.7:8000';
+                  final report = ReportAssetParser.parse(order.informeTrabajo);
 
                   return Container(
                     width: double.infinity,
@@ -291,80 +275,51 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          displayText,
+                          report.text.isEmpty
+                              ? 'Sin informe registrado.'
+                              : report.text,
                           style: GoogleFonts.dmSans(
                             color: AppTheme.textColor(context),
                             fontSize: 14,
                           ),
                         ),
-                        if (imageUrls.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            'Fotos de repuestos:',
-                            style: GoogleFonts.dmSans(
-                              color: AppTheme.textMutedColor(context),
-                              fontSize: 12,
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardColor(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppTheme.borderColor(context),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 90,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: imageUrls.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 8),
-                              itemBuilder: (context, i) {
-                                final img = imageUrls[i];
-                                final fullUrl = img.startsWith('http') ? img : '$apiBase$img';
-                                return GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) => Dialog(
-                                        backgroundColor: Colors.transparent,
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          child: Image.network(
-                                            fullUrl,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      fullUrl,
-                                      width: 90,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                                width: 90,
-                                                height: 90,
-                                                color: AppTheme.borderColor(
-                                                  context,
-                                                ),
-                                                child: Icon(
-                                                  Icons.broken_image,
-                                                  color:
-                                                      AppTheme.textMutedColor(
-                                                        context,
-                                                      ),
-                                                ),
-                                              ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                report.hasImages
+                                    ? Icons.image_outlined
+                                    : Icons.hide_image_outlined,
+                                size: 16,
+                                color: AppTheme.textMutedColor(context),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                report.hasImages
+                                    ? 'Tiene imagenes (${report.imageUrls.length})'
+                                    : 'Sin imagenes',
+                                style: GoogleFonts.dmSans(
+                                  color: AppTheme.textMutedColor(context),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   );
