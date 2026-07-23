@@ -150,7 +150,7 @@ def register_client(db: Session, data: ClientRegister):
     # Magia para el primer usuario: Si no hay nadie en la BD, el primero es Super Admin y ya está activo
     is_first_user = db.query(User).count() == 0
     assigned_role = UserRole.admin if is_first_user else UserRole.client
-    assigned_active = True # Siempre activo temporalmente por bloqueo de Railway
+    assigned_active = True if is_first_user else False
 
     user = User(
         nombre=data.nombre,
