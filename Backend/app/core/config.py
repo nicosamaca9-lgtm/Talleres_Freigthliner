@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5256000 # 10 años para que nunca se cierre sola
 
     # Firebase
     FIREBASE_CREDENTIALS_JSON: str | None = None
