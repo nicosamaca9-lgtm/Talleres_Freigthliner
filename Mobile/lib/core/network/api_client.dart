@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'https://thorough-manifestation-production-a72f.up.railway.app/api/v1';
+  static const String baseUrl = 'https://api.tfcentroautomotriz.com/api/v1';
 
   late final Dio dio;
 

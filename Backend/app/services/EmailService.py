@@ -4,7 +4,7 @@ from app.core.config import settings
 
 RESEND_API_KEY = settings.RESEND_API_KEY or ''
 BASE_URL = settings.BASE_URL or 'https://thorough-manifestation-production-a72f.up.railway.app'
-FROM_EMAIL = 'TF Centro Automotriz <onboarding@resend.dev>'
+FROM_EMAIL = 'TF Centro Automotriz <noreply@tfcentroautomotriz.com>'
 
 
 def _send_via_resend(to_email: str, subject: str, html_content: str):
