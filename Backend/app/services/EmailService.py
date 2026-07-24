@@ -1,14 +1,40 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import httpx
 
 from app.core.config import settings
 
-SMTP_HOST = 'smtp.gmail.com'
-SMTP_PORT = 587
-SMTP_USER = settings.SMTP_USER or 'serviciostf123@gmail.com'
-SMTP_PASSWORD = settings.SMTP_PASSWORD or ''
-BASE_URL = settings.BASE_URL or 'http://localhost:8000'
+RESEND_API_KEY = settings.RESEND_API_KEY or ''
+BASE_URL = settings.BASE_URL or 'https://thorough-manifestation-production-a72f.up.railway.app'
+FROM_EMAIL = 'TF Centro Automotriz <onboarding@resend.dev>'
+
+
+def _send_via_resend(to_email: str, subject: str, html_content: str):
+    """Envía un correo usando la API HTTP de Resend (funciona en Railway sin restricciones de SMTP)."""
+    if not RESEND_API_KEY:
+        print('[EmailService] No hay RESEND_API_KEY configurada.')
+        return
+
+    try:
+        response = httpx.post(
+            'https://api.resend.com/emails',
+            headers={
+                'Authorization': f'Bearer {RESEND_API_KEY}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'from': FROM_EMAIL,
+                'to': [to_email],
+                'subject': subject,
+                'html': html_content,
+            },
+            timeout=10,
+        )
+        if response.status_code not in (200, 201):
+            print(f'[EmailService] Error de Resend ({response.status_code}): {response.text}')
+        else:
+            print(f'[EmailService] Correo enviado correctamente a {to_email}')
+    except Exception as e:
+        print(f'[EmailService] Error al enviar correo a {to_email}: {e}')
+        raise
 
 
 def send_verification_email(correo_destinatario: str, nombre: str, token: str):
@@ -44,35 +70,15 @@ def send_verification_email(correo_destinatario: str, nombre: str, token: str):
   </div>
 </body></html>'''
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = 'Activa tu cuenta en TF Centro Automotriz'
-    msg['From'] = f'TF Centro Automotriz <{SMTP_USER}>'
-    msg['To'] = correo_destinatario
-    msg.attach(MIMEText(html_content, 'html'))
+    _send_via_resend(
+        to_email=correo_destinatario,
+        subject='Activa tu cuenta en TF Centro Automotriz',
+        html_content=html_content,
+    )
 
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=3) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, correo_destinatario, msg.as_string())
-    except Exception as e:
-        print(f'[EmailService] Error al enviar correo a {correo_destinatario}: {e}')
-        raise
 
 def send_password_recovery_email(to_email: str, pin: str):
-    """
-    Envía un correo con el PIN de 6 dígitos para recuperar contraseña.
-    """
-    if not SMTP_PASSWORD or not SMTP_USER:
-        print("[EmailService] No hay credenciales SMTP configuradas para recuperación.")
-        return
-
-    msg = MIMEMultipart("alternative")
-    msg['Subject'] = "Recuperación de Contraseña - Talleres Freightliner"
-    msg['From'] = f"Talleres Freightliner <{SMTP_USER}>"
-    msg['To'] = to_email
-
+    """Envía un correo con el PIN de 6 dígitos para recuperar contraseña."""
     html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
@@ -92,15 +98,8 @@ def send_password_recovery_email(to_email: str, pin: str):
     </html>
     """
 
-    part = MIMEText(html_content, "html")
-    msg.attach(part)
-
-    try:
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
-        server.quit()
-    except Exception as e:
-        print(f"[EmailService] Error al enviar correo de recuperación a {to_email}: {e}")
-        raise
+    _send_via_resend(
+        to_email=to_email,
+        subject='Recuperación de Contraseña - Talleres Freightliner',
+        html_content=html_content,
+    )

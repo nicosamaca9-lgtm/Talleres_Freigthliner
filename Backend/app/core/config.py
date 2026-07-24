@@ -29,10 +29,13 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str | None = None
     CLOUDINARY_API_SECRET: str | None = None
 
-    # SMTP (correos)
+    # SMTP (correos) - Legado, ya no se usa
     SMTP_USER: str | None = None
     SMTP_PASSWORD: str | None = None
     BASE_URL: str = "http://localhost:8000"
+
+    # Resend (envio de correos via API HTTP - reemplaza SMTP)
+    RESEND_API_KEY: str | None = None
 
     class Config:
         env_file = ".env"
