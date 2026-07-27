@@ -29,4 +29,26 @@ void main() {
     expect(report.text, isEmpty);
     expect(report.imageUrls, isEmpty);
   });
+
+  test('serialize keeps text and selected image urls in report format', () {
+    final report = ReportAssetParser.serialize(
+      text: 'Diagnostico: fuga',
+      imageUrls: ['https://cdn.test/a.jpg', ' https://cdn.test/b.jpg '],
+    );
+
+    expect(
+      report,
+      'Diagnostico: fuga\n\n'
+      '[IMAGENES]https://cdn.test/a.jpg,https://cdn.test/b.jpg[/IMAGENES]',
+    );
+  });
+
+  test('serialize removes image block when no image urls remain', () {
+    final report = ReportAssetParser.serialize(
+      text: 'Diagnostico: fuga',
+      imageUrls: [],
+    );
+
+    expect(report, 'Diagnostico: fuga');
+  });
 }

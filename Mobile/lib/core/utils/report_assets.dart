@@ -37,6 +37,28 @@ class ReportAssetParser {
     );
   }
 
+  static String serialize({
+    required String text,
+    required List<String> imageUrls,
+  }) {
+    final cleanedText = _normalizeBlankLines(text);
+    final cleanedImageUrls = imageUrls
+        .map((url) => url.trim())
+        .where((url) => url.isNotEmpty)
+        .toList();
+
+    if (cleanedImageUrls.isEmpty) {
+      return cleanedText;
+    }
+
+    final imagesBlock = '[IMAGENES]${cleanedImageUrls.join(',')}[/IMAGENES]';
+    if (cleanedText.isEmpty) {
+      return imagesBlock;
+    }
+
+    return '$cleanedText\n\n$imagesBlock';
+  }
+
   static String _normalizeBlankLines(String value) {
     return value.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
   }

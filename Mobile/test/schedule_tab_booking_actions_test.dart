@@ -101,4 +101,45 @@ void main() {
     expect(find.text('RECHAZADO'), findsOneWidget);
     expect(reprogramButton.onPressed, isNull);
   });
+
+  testWidgets(
+    'booking action buttons stay on the same row on compact screens',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthProvider>.value(
+              value: FakeAuthProvider(),
+            ),
+            ChangeNotifierProvider<BookingProvider>.value(
+              value: FakeBookingProvider([buildBooking(estado: 'PENDIENTE')]),
+            ),
+            ChangeNotifierProvider<VehicleProvider>.value(
+              value: FakeVehicleProvider([buildVehicle()]),
+            ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: ScheduleTab())),
+        ),
+      );
+      await tester.pump();
+
+      final reprogramButton = find.widgetWithText(
+        ElevatedButton,
+        'Reprogramar',
+      );
+      final cancelButton = find.widgetWithText(ElevatedButton, 'Cancelar');
+
+      expect(reprogramButton, findsOneWidget);
+      expect(cancelButton, findsOneWidget);
+      expect(
+        tester.getTopLeft(reprogramButton).dy,
+        tester.getTopLeft(cancelButton).dy,
+      );
+    },
+  );
 }
