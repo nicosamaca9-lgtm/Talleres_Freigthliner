@@ -797,34 +797,29 @@ class _ServicePickerCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              StatusChip(text: 'Cambio de aceite', color: AppTheme.green),
               StatusChip(text: 'Escaneada y diagnostico', color: AppTheme.blue),
-              StatusChip(
-                text: 'Cambio de empaques multiple',
-                color: AppTheme.amber,
-              ),
               StatusChip(text: 'Reparacion de motor', color: AppTheme.red),
-              StatusChip(
-                text: 'Cambio bomba de agua',
-                color: AppTheme.textMuted,
-              ),
-              StatusChip(
-                text: 'Cambio empaques enfriador de aceite',
-                color: AppTheme.amber,
-              ),
-              StatusChip(
-                text: 'Electricidad general del vehiculo',
-                color: AppTheme.blue,
-              ),
               StatusChip(text: 'Parcial motor', color: AppTheme.red),
               StatusChip(text: 'Arreglo modulos', color: AppTheme.blue),
+              StatusChip(text: 'Reprogramacion de modulos', color: AppTheme.amber),
+              StatusChip(text: 'Cambio empaquetaduras', color: AppTheme.green),
+              StatusChip(text: 'Empaquetaduras motor', color: AppTheme.amber),
               StatusChip(
-                text: 'Reprogramacion de modulos',
+                text: 'Reparacion cajas automatizadas Mercedes Benz',
+                color: AppTheme.blue,
+              ),
+              StatusChip(text: 'Arreglo fugas', color: AppTheme.red),
+              StatusChip(
+                text: 'Pruebas analogicas de inyeccion y otros',
                 color: AppTheme.amber,
               ),
               StatusChip(
-                text: 'Eliminacion de urea',
-                color: AppTheme.textMuted,
+                text: 'Electricidad y electronica aplicada a su vehiculo',
+                color: AppTheme.blue,
+              ),
+              StatusChip(
+                text: 'Arreglo y reprogramacion de postratamiento',
+                color: AppTheme.green,
               ),
             ],
           ),
