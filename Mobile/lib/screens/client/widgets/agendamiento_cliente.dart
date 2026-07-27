@@ -850,10 +850,10 @@ class _ServicePickerCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              StatusChip(text: 'Cambio de aceite', color: AppTheme.green),
-              StatusChip(text: 'Escaneada y diagnostico', color: AppTheme.blue),
+              StatusChip(text: 'Cambio de Empaquetaduras', color: AppTheme.green),
+              StatusChip(text: 'Empaquetaduras Motor', color: AppTheme.blue),
               StatusChip(
-                text: 'Cambio de empaques multiple',
+                text: '',
                 color: AppTheme.amber,
               ),
               StatusChip(text: 'Reparacion de motor', color: AppTheme.red),

@@ -58,11 +58,18 @@ class PdfGenerator {
     final report = ReportAssetParser.parse(order.informeTrabajo);
     final reportImages = <pw.ImageProvider>[];
 
-    for (final url in report.imageUrls) {
+    final imageFutures = report.imageUrls.map((url) async {
       try {
-        reportImages.add(await networkImage(url));
+        return await networkImage(url);
       } catch (_) {
-        // El PDF no debe fallar si una imagen remota deja de estar disponible.
+        return null;
+      }
+    });
+    
+    final loadedImages = await Future.wait(imageFutures);
+    for (var img in loadedImages) {
+      if (img != null) {
+        reportImages.add(img);
       }
     }
 
@@ -211,6 +218,32 @@ class PdfGenerator {
     );
 
     if (reportImages.isNotEmpty) {
+      final imageWidgets = <pw.Widget>[];
+      
+      for (int i = 0; i < reportImages.length; i += 2) {
+        final rowChildren = <pw.Widget>[];
+        
+        rowChildren.add(_buildImageContainer(i, reportImages[i]));
+        
+        if (i + 1 < reportImages.length) {
+          rowChildren.add(_buildImageContainer(i + 1, reportImages[i + 1]));
+        }
+        
+        imageWidgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 12),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: rowChildren.map((w) => pw.Padding(
+                padding: const pw.EdgeInsets.only(right: 12),
+                child: w,
+              )).toList(),
+            ),
+          )
+        );
+      }
+
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
@@ -220,35 +253,7 @@ class PdfGenerator {
               style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 12),
-            pw.Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: reportImages.asMap().entries.map((entry) {
-                return pw.Container(
-                  width: 250,
-                  height: 220,
-                  padding: const pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.grey400),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Imagen ${entry.key + 1}',
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Expanded(
-                        child: pw.Center(
-                          child: pw.Image(entry.value, fit: pw.BoxFit.contain),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
+            ...imageWidgets,
           ],
         ),
       );
@@ -412,6 +417,32 @@ class PdfGenerator {
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: '${receipt['tipo_documento']}_${receipt['numero_recibo']}.pdf',
+    );
+  }
+
+  static pw.Widget _buildImageContainer(int index, pw.ImageProvider image) {
+    return pw.Container(
+      width: 250,
+      height: 220,
+      padding: const pw.EdgeInsets.all(8),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey400),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Imagen ${index + 1}',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Expanded(
+            child: pw.Center(
+              child: pw.Image(image, fit: pw.BoxFit.contain),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
