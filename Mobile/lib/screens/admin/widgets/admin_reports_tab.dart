@@ -8,8 +8,20 @@ import '../../../core/utils/pdf_generator.dart';
 import '../../../core/utils/report_assets.dart';
 import 'package:intl/intl.dart';
 
+typedef ServiceOrderPdfDownloadAction =
+    Future<void> Function(ServiceOrderModel order);
+typedef ServiceOrderPdfShareAction =
+    Future<bool> Function(ServiceOrderModel order);
+
 class AdminReportsTab extends StatefulWidget {
-  const AdminReportsTab({super.key});
+  const AdminReportsTab({
+    super.key,
+    this.downloadServiceOrderPdf,
+    this.shareServiceOrderPdf,
+  });
+
+  final ServiceOrderPdfDownloadAction? downloadServiceOrderPdf;
+  final ServiceOrderPdfShareAction? shareServiceOrderPdf;
 
   @override
   State<AdminReportsTab> createState() => _AdminReportsTabState();
@@ -287,6 +299,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                         itemCount: rawOrders.length,
                         itemBuilder: (context, index) {
                           final order = rawOrders[index];
+                          final orderModel = ServiceOrderModel.fromJson(order);
                           final report = ReportAssetParser.parse(
                             order['informe_trabajo']?.toString(),
                           );
@@ -364,26 +377,9 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                                       report.hasImages)
                                     _buildReportSummary(context, report),
                                   const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.picture_as_pdf),
-                                      label: const Text(
-                                        'Descargar Orden (PDF)',
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.redAccent,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        final orderModel =
-                                            ServiceOrderModel.fromJson(order);
-                                        PdfGenerator.generateServiceOrderPdf(
-                                          orderModel,
-                                          null,
-                                        );
-                                      },
-                                    ),
+                                  _buildServiceOrderPdfActions(
+                                    context,
+                                    orderModel,
                                   ),
                                 ],
                               ),
@@ -509,5 +505,92 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
         ],
       ),
     );
+  }
+
+  Widget _buildServiceOrderPdfActions(
+    BuildContext context,
+    ServiceOrderModel order,
+  ) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ElevatedButton.icon(
+            key: Key('download_service_order_pdf_${order.idOrden}'),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Descargar Orden (PDF)'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => _downloadServiceOrderPdf(context, order),
+          ),
+          OutlinedButton.icon(
+            key: Key('share_service_order_pdf_${order.idOrden}'),
+            icon: const Icon(Icons.share_outlined),
+            label: const Text('Compartir PDF'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.green,
+              side: const BorderSide(color: AppTheme.green),
+            ),
+            onPressed: () => _shareServiceOrderPdf(context, order),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _downloadServiceOrderPdf(
+    BuildContext context,
+    ServiceOrderModel order,
+  ) async {
+    try {
+      final action = widget.downloadServiceOrderPdf;
+      if (action != null) {
+        await action(order);
+      } else {
+        await PdfGenerator.generateServiceOrderPdf(order, null);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al generar PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareServiceOrderPdf(
+    BuildContext context,
+    ServiceOrderModel order,
+  ) async {
+    try {
+      final action = widget.shareServiceOrderPdf;
+      final shared = action != null
+          ? await action(order)
+          : await PdfGenerator.shareServiceOrderPdf(order, null);
+
+      if (!shared && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el panel de compartir.'),
+            backgroundColor: AppTheme.amber,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al compartir PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
   }
 }

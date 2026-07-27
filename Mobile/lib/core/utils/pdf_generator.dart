@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -6,7 +8,49 @@ import '../../models/user_model.dart';
 import 'report_assets.dart';
 
 class PdfGenerator {
+  static String serviceOrderPdfFileName(ServiceOrderModel order) {
+    final rawIdentifier = order.numeroOrden.isNotEmpty
+        ? order.numeroOrden
+        : 'ORD-${order.idOrden}';
+    final safeIdentifier = rawIdentifier.replaceAll(
+      RegExp(r'[^A-Za-z0-9_-]+'),
+      '_',
+    );
+
+    return 'Orden_Servicio_$safeIdentifier.pdf';
+  }
+
   static Future<void> generateServiceOrderPdf(
+    ServiceOrderModel order,
+    UserModel? mechanic,
+  ) async {
+    final bytes = await buildServiceOrderPdfBytes(order, mechanic);
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => bytes,
+      name: serviceOrderPdfFileName(order),
+    );
+  }
+
+  static Future<bool> shareServiceOrderPdf(
+    ServiceOrderModel order,
+    UserModel? mechanic,
+  ) async {
+    final identifier = order.numeroOrden.isNotEmpty
+        ? order.numeroOrden
+        : 'ORD-${order.idOrden}';
+    final filename = serviceOrderPdfFileName(order);
+    final bytes = await buildServiceOrderPdfBytes(order, mechanic);
+
+    return Printing.sharePdf(
+      bytes: bytes,
+      filename: filename,
+      subject: 'Orden de servicio $identifier',
+      body: 'Adjunto la orden de servicio $identifier.',
+    );
+  }
+
+  static Future<Uint8List> buildServiceOrderPdfBytes(
     ServiceOrderModel order,
     UserModel? mechanic,
   ) async {
@@ -210,10 +254,7 @@ class PdfGenerator {
       );
     }
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'Orden_Servicio_${order.numeroOrden}.pdf',
-    );
+    return pdf.save();
   }
 
   static Future<void> generateReceiptPdf(Map<String, dynamic> receipt) async {
@@ -264,7 +305,7 @@ class PdfGenerator {
                 ),
               ),
               pw.SizedBox(height: 20),
-              pw.Table.fromTextArray(
+              pw.TableHelper.fromTextArray(
                 context: context,
                 border: pw.TableBorder.all(color: PdfColors.black, width: 1),
                 headerAlignment: pw.Alignment.centerLeft,
@@ -300,7 +341,7 @@ class PdfGenerator {
                 ],
               ),
               pw.SizedBox(height: 20),
-              pw.Table.fromTextArray(
+              pw.TableHelper.fromTextArray(
                 context: context,
                 border: pw.TableBorder.all(color: PdfColors.black, width: 1),
                 headerDecoration: const pw.BoxDecoration(

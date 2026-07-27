@@ -7,6 +7,7 @@ import '../../../models/service_order_model.dart';
 import '../../../models/user_model.dart';
 import '../../../models/user_role.dart';
 import 'service_order_form_dialog.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/utils/pdf_generator.dart';
 import '../../../core/utils/report_assets.dart';
 
@@ -284,42 +285,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardColor(context),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: AppTheme.borderColor(context),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                report.hasImages
-                                    ? Icons.image_outlined
-                                    : Icons.hide_image_outlined,
-                                size: 16,
-                                color: AppTheme.textMutedColor(context),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                report.hasImages
-                                    ? 'Tiene imagenes (${report.imageUrls.length})'
-                                    : 'Sin imagenes',
-                                style: GoogleFonts.dmSans(
-                                  color: AppTheme.textMutedColor(context),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildReportImagePreview(context, report.imageUrls),
                       ],
                     ),
                   );
@@ -389,6 +355,208 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
         ),
       ),
     );
+  }
+
+  Widget _buildReportImagePreview(
+    BuildContext context,
+    List<String> imageUrls, {
+    double size = 74,
+  }) {
+    if (imageUrls.isEmpty) {
+      return _buildImageStateChip(
+        context,
+        icon: Icons.hide_image_outlined,
+        label: 'Sin imagenes',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Evidencia:',
+          style: GoogleFonts.dmSans(
+            color: AppTheme.textMutedColor(context),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: size,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: imageUrls.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final imageUrl = _resolveReportImageUrl(imageUrls[index]);
+              return GestureDetector(
+                key: Key('admin_report_image_preview_$index'),
+                onTap: () => _showReportImage(context, imageUrl),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: size,
+                      height: size,
+                      color: AppTheme.cardColor(context),
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppTheme.textMutedColor(context),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageStateChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.borderColor(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppTheme.textMutedColor(context)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.dmSans(
+              color: AppTheme.textMutedColor(context),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditableReportImages(
+    BuildContext context,
+    List<String> imageUrls,
+    StateSetter setDialogState,
+  ) {
+    if (imageUrls.isEmpty) {
+      return _buildImageStateChip(
+        context,
+        icon: Icons.hide_image_outlined,
+        label: 'Sin imagenes',
+      );
+    }
+
+    return SizedBox(
+      height: 86,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: imageUrls.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final imageUrl = _resolveReportImageUrl(imageUrls[index]);
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: () => _showReportImage(context, imageUrl),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    width: 74,
+                    height: 74,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 74,
+                      height: 74,
+                      color: AppTheme.cardColor(context),
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppTheme.textMutedColor(context),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: -6,
+                right: -6,
+                child: IconButton(
+                  key: Key('admin_report_image_delete_$index'),
+                  onPressed: () {
+                    setDialogState(() {
+                      imageUrls.removeAt(index);
+                    });
+                  },
+                  icon: const Icon(Icons.close, size: 14),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppTheme.red,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(28, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showReportImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => Container(
+              padding: const EdgeInsets.all(24),
+              color: AppTheme.cardColor(context),
+              child: Text(
+                'No se pudo cargar la imagen.',
+                style: TextStyle(color: AppTheme.textColor(context)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _resolveReportImageUrl(String imageUrl) {
+    final trimmedUrl = imageUrl.trim();
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      return trimmedUrl;
+    }
+
+    final apiRoot = ApiClient.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
+    if (trimmedUrl.startsWith('/')) {
+      return '$apiRoot$trimmedUrl';
+    }
+    return '$apiRoot/$trimmedUrl';
   }
 
   Future<void> _finishOrder(
@@ -480,20 +648,11 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
     ServiceOrderModel order,
     AdminProvider provider,
   ) async {
-    final rawText = order.informeTrabajo ?? '';
+    final report = ReportAssetParser.parse(order.informeTrabajo);
+    final imageUrls = List<String>.from(report.imageUrls);
 
     // Extraer imágenes para no perderlas
-    String textToEdit = rawText;
-    String imagesBlock = '';
-
-    final imgRegex = RegExp(r'(\[IMAGENES\].*?\[/IMAGENES\])');
-    final match = imgRegex.firstMatch(rawText);
-    if (match != null) {
-      imagesBlock = match.group(1) ?? '';
-      textToEdit = rawText.replaceAll(imgRegex, '').trim();
-    }
-
-    final controller = TextEditingController(text: textToEdit);
+    var reportText = report.text;
     bool isSaving = false;
 
     await showDialog(
@@ -509,16 +668,36 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               ),
               content: SizedBox(
                 width: 400,
-                child: TextField(
-                  controller: controller,
-                  maxLines: 8,
-                  style: TextStyle(color: AppTheme.textColor(context)),
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    hintText: 'Edite el informe del mecánico...',
-                    hintStyle: TextStyle(
-                      color: AppTheme.textMutedColor(context),
-                    ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        initialValue: reportText,
+                        onChanged: (value) => reportText = value,
+                        maxLines: 8,
+                        style: TextStyle(color: AppTheme.textColor(context)),
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          hintText: 'Edite el informe del mecánico...',
+                          hintStyle: TextStyle(
+                            color: AppTheme.textMutedColor(context),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Imagenes adjuntas',
+                        style: GoogleFonts.dmSans(
+                          color: AppTheme.green,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildEditableReportImages(context, imageUrls, setState),
+                    ],
                   ),
                 ),
               ),
@@ -535,10 +714,10 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                       ? null
                       : () async {
                           setState(() => isSaving = true);
-                          final newText = controller.text.trim();
-                          final finalText = imagesBlock.isNotEmpty
-                              ? '$newText\n\n$imagesBlock'
-                              : newText;
+                          final finalText = ReportAssetParser.serialize(
+                            text: reportText,
+                            imageUrls: imageUrls,
+                          );
                           final navigator = Navigator.of(ctx);
                           final scaffoldMessenger = ScaffoldMessenger.of(ctx);
 
