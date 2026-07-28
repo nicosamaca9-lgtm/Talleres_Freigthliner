@@ -336,7 +336,9 @@ class _BookingTile extends StatelessWidget {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               'No, volver',
-              style: GoogleFonts.dmSans(color: AppTheme.textMutedColor(ctx)),
+              style: GoogleFonts.dmSans(
+                color: AppTheme.textMutedColor(ctx),
+              ),
             ),
           ),
           TextButton(
@@ -488,15 +490,11 @@ class _BookingTile extends StatelessWidget {
                 size: 16,
               ),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '${booking.fechaCita.toIso8601String().split('T').first}  •  ${booking.horaCita}',
-                  style: GoogleFonts.dmSans(
-                    color: AppTheme.textMutedColor(context),
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                '${booking.fechaCita.toIso8601String().split('T').first}  •  ${booking.horaCita}',
+                style: GoogleFonts.dmSans(
+                  color: AppTheme.textMutedColor(context),
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -577,28 +575,27 @@ class _BookingTile extends StatelessWidget {
           ],
           const SizedBox(height: 14),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: _BookingActionTextButton(
-                  label: 'Reprogramar',
-                  onPressed: _canReschedule
-                      ? () {
-                          showDialog(
-                            context: context,
-                            builder: (_) =>
-                                BookingRescheduleDialog(booking: booking),
-                          );
-                        }
-                      : null,
-                ),
+              ActionButton(
+                label: 'Reprogramar',
+                icon: Icons.edit_calendar_rounded,
+                onPressed: _canReschedule
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) =>
+                              BookingRescheduleDialog(booking: booking),
+                        );
+                      }
+                    : null,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _BookingActionTextButton(
-                  label: 'Cancelar',
-                  isDanger: true,
-                  onPressed: () => _confirmCancel(context),
-                ),
+              const SizedBox(width: 10),
+              ActionButton(
+                label: 'Cancelar',
+                icon: Icons.cancel_outlined,
+                isDanger: true,
+                onPressed: () => _confirmCancel(context),
               ),
             ],
           ),
@@ -609,56 +606,6 @@ class _BookingTile extends StatelessWidget {
 }
 
 // ─── VEHÍCULOS EN TALLER ─────────────────────────────────────────────────────
-
-class _BookingActionTextButton extends StatelessWidget {
-  const _BookingActionTextButton({
-    required this.label,
-    required this.onPressed,
-    this.isDanger = false,
-  });
-
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isDanger;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isDanger
-        ? AppTheme.red.withValues(alpha: 0.18)
-        : AppTheme.cardColor(context);
-    final foreground = isDanger
-        ? const Color(0xFFFF6B6B)
-        : AppTheme.textColor(context);
-    final borderColor = isDanger
-        ? AppTheme.red.withValues(alpha: 0.55)
-        : AppTheme.borderColor(context);
-
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: background,
-        foregroundColor: foreground,
-        disabledBackgroundColor: background.withValues(alpha: 0.55),
-        disabledForegroundColor: foreground.withValues(alpha: 0.45),
-        elevation: 0,
-        minimumSize: const Size.fromHeight(50),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9),
-          side: BorderSide(color: borderColor),
-        ),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          label,
-          maxLines: 1,
-          style: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w800),
-        ),
-      ),
-    );
-  }
-}
 
 class _ActiveOrdersList extends StatelessWidget {
   const _ActiveOrdersList();
@@ -862,34 +809,29 @@ class _ServicePickerCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              StatusChip(text: 'Cambio de aceite', color: AppTheme.green),
               StatusChip(text: 'Escaneada y diagnostico', color: AppTheme.blue),
-              StatusChip(
-                text: 'Cambio de empaques multiple',
-                color: AppTheme.amber,
-              ),
               StatusChip(text: 'Reparacion de motor', color: AppTheme.red),
-              StatusChip(
-                text: 'Cambio bomba de agua',
-                color: AppTheme.textMuted,
-              ),
-              StatusChip(
-                text: 'Cambio empaques enfriador de aceite',
-                color: AppTheme.amber,
-              ),
-              StatusChip(
-                text: 'Electricidad general del vehiculo',
-                color: AppTheme.blue,
-              ),
               StatusChip(text: 'Parcial motor', color: AppTheme.red),
               StatusChip(text: 'Arreglo modulos', color: AppTheme.blue),
+              StatusChip(text: 'Reprogramacion de modulos', color: AppTheme.amber),
+              StatusChip(text: 'Cambio empaquetaduras', color: AppTheme.green),
+              StatusChip(text: 'Empaquetaduras motor', color: AppTheme.amber),
               StatusChip(
-                text: 'Reprogramacion de modulos',
+                text: 'Reparacion cajas automatizadas Mercedes Benz',
+                color: AppTheme.blue,
+              ),
+              StatusChip(text: 'Arreglo fugas', color: AppTheme.red),
+              StatusChip(
+                text: 'Pruebas analogicas de inyeccion y otros',
                 color: AppTheme.amber,
               ),
               StatusChip(
-                text: 'Eliminacion de urea',
-                color: AppTheme.textMuted,
+                text: 'Electricidad y electronica aplicada a su vehiculo',
+                color: AppTheme.blue,
+              ),
+              StatusChip(
+                text: 'Arreglo y reprogramacion de postratamiento',
+                color: AppTheme.green,
               ),
             ],
           ),

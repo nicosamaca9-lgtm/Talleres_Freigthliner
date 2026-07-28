@@ -57,6 +57,30 @@ class _TechnicalReportDialogState extends State<TechnicalReportDialog> {
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor(context),
+        title: Text('Confirmar entrega', style: TextStyle(color: AppTheme.textColor(context))),
+        content: Text(
+          '¿Estás seguro de entregar el informe? Una vez entregado no podrás editarlo y se notificará al administrador.\n\nTen en cuenta que si hay imágenes adjuntas, la subida puede tardar unos segundos.',
+          style: TextStyle(color: AppTheme.textMutedColor(context)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, entregar', style: TextStyle(color: AppTheme.green)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final mechanicProvider = context.read<MechanicProvider>();
     final authProvider = context.read<AuthProvider>();
 
