@@ -176,11 +176,15 @@ class _MyBookingsList extends StatelessWidget {
         final now = DateTime.now();
         final bookings = allBookings.where((b) {
           if (b.estadoConfirmacion == 'EN_TALLER' ||
-              b.estadoConfirmacion == 'CANCELADO_POR_SISTEMA')
+              b.estadoConfirmacion == 'CANCELADO_POR_SISTEMA') {
             return false;
+          }
           // Filtrar citas vencidas (hace más de 6 horas)
-          if (b.fechaHoraCita.isBefore(now.subtract(const Duration(hours: 6))))
+          if (b.fechaHoraCita.isBefore(
+            now.subtract(const Duration(hours: 6)),
+          )) {
             return false;
+          }
           return true;
         }).toList();
 
@@ -241,6 +245,11 @@ class _BookingTile extends StatelessWidget {
 
   bool get _canReschedule => booking.estadoConfirmacion != 'RECHAZADO';
 
+  String _statusLabel(String status) {
+    return status == 'RECHAZADO' ? 'REVOCADO' : status;
+  }
+
+  // ignore: unused_element
   void _showFriendlyError(BuildContext context, String error) {
     showDialog(
       context: context,
@@ -350,6 +359,7 @@ class _BookingTile extends StatelessWidget {
       booking.idAgendamiento,
       userId,
     );
+    if (!navigator.mounted) return;
 
     if (success) {
       scaffoldMessenger.showSnackBar(
@@ -464,7 +474,7 @@ class _BookingTile extends StatelessWidget {
                 ),
               ),
               StatusChip(
-                text: booking.estadoConfirmacion,
+                text: _statusLabel(booking.estadoConfirmacion),
                 color: _statusColor(booking.estadoConfirmacion),
               ),
             ],
@@ -523,9 +533,11 @@ class _BookingTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Colors.redAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                border: Border.all(
+                  color: Colors.redAccent.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +759,7 @@ class _ActiveOrderTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.inputColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.35)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

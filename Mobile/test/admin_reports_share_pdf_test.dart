@@ -47,7 +47,17 @@ class FakeAdminReportsProvider extends AdminProvider {
         'marca_vehiculo': 'Volvo',
       },
     ],
-    'recibos': [],
+    'recibos': [
+      {
+        'id_recibo': 9,
+        'tipo_documento': 'RECIBO',
+        'numero_recibo': 'REC-0009',
+        'cliente_nombre': 'Luis',
+        'placa': 'ABC123',
+        'total': 119000,
+        'estado': 'FINALIZADO',
+      },
+    ],
   };
 
   @override
@@ -72,6 +82,7 @@ void main() {
     (tester) async {
       final provider = FakeAdminReportsProvider();
       ServiceOrderModel? sharedOrder;
+      Map<String, dynamic>? sharedReceipt;
 
       await tester.pumpWidget(
         ChangeNotifierProvider<AdminProvider>.value(
@@ -81,6 +92,10 @@ void main() {
               body: AdminReportsTab(
                 shareServiceOrderPdf: (order) async {
                   sharedOrder = order;
+                  return true;
+                },
+                shareReceiptPdf: (receipt) async {
+                  sharedReceipt = receipt;
                   return true;
                 },
               ),
@@ -103,6 +118,33 @@ void main() {
 
       expect(sharedOrder?.idOrden, 1);
       expect(sharedOrder?.numeroOrden, 'ORD-0001');
+
+      await tester.tap(find.text('Recibos'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Descargar Recibo (PDF)'), findsNothing);
+      expect(find.byKey(const Key('download_receipt_pdf_9')), findsOneWidget);
+      expect(find.byKey(const Key('share_receipt_pdf_9')), findsOneWidget);
+      expect(
+        tester.getCenter(find.byKey(const Key('download_receipt_pdf_9'))).dy,
+        moreOrLessEquals(
+          tester.getCenter(find.text('RECIBO REC-0009')).dy,
+          epsilon: 24,
+        ),
+      );
+      expect(
+        tester.getCenter(find.byKey(const Key('share_receipt_pdf_9'))).dy,
+        moreOrLessEquals(
+          tester.getCenter(find.text('RECIBO REC-0009')).dy,
+          epsilon: 24,
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('share_receipt_pdf_9')));
+      await tester.pump();
+
+      expect(sharedReceipt?['id_recibo'], 9);
+      expect(sharedReceipt?['numero_recibo'], 'REC-0009');
     },
   );
 }

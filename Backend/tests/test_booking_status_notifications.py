@@ -99,6 +99,10 @@ def test_reject_booking_notifies_booking_owner(db, monkeypatch):
     assert calls[0]["user_ids"] == [owner.id_usuario]
     assert calls[0]["type"] == NotificationType.booking_rejected
     assert calls[0]["title"] == "Cita rechazada"
+    assert (
+        calls[0]["body"]
+        == f"No pudimos agendar su cita para {booking.fecha_cita.isoformat()} en esta ocasión"
+    )
     assert calls[0]["data"] == {
         "type": "booking_rejected",
         "booking_id": str(booking.id_agendamiento),

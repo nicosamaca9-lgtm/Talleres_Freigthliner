@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/admin_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/thousand_separator_formatter.dart';
 
 class AdminReceiptFormScreen extends StatefulWidget {
   final Map<String, dynamic>? receipt;
@@ -420,13 +421,17 @@ class _AdminReceiptFormScreenState extends State<AdminReceiptFormScreen> {
   }
 
   Widget _buildItemField(Map<String, dynamic> item, String key, String label, TextInputType type, int idx) {
+    final isUnitValue = key == 'valor_unitario';
     return TextFormField(
-      initialValue: item[key].toString(),
+      initialValue: isUnitValue ? formatThousandsValue(item[key]) : item[key].toString(),
       style: TextStyle(color: AppTheme.textColor(context)),
       keyboardType: type,
+      inputFormatters: isUnitValue ? const [ThousandSeparatorInputFormatter()] : null,
       onChanged: (val) {
         if (key == 'descripcion') {
           _items[idx][key] = val;
+        } else if (isUnitValue) {
+          _items[idx][key] = parseThousandsNumber(val);
         } else {
           _items[idx][key] = num.tryParse(val) ?? 0;
         }

@@ -107,13 +107,15 @@ class AdminService:
                 booking,
                 notification_type=NotificationType.booking_rejected,
                 title="Cita rechazada",
-                body=AdminService._booking_status_body(
-                    booking,
-                    "Tu cita fue rechazada",
-                ),
+                body=AdminService._booking_rejected_body(booking),
                 background_tasks=background_tasks,
             )
         return booking
+
+    @staticmethod
+    def _booking_rejected_body(booking: Booking) -> str:
+        booking_date = booking.fecha_cita.isoformat()
+        return f"No pudimos agendar su cita para {booking_date} en esta ocasión"
 
     @staticmethod
     def _booking_status_body(booking: Booking, prefix: str) -> str:

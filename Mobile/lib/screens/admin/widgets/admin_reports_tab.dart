@@ -12,16 +12,24 @@ typedef ServiceOrderPdfDownloadAction =
     Future<void> Function(ServiceOrderModel order);
 typedef ServiceOrderPdfShareAction =
     Future<bool> Function(ServiceOrderModel order);
+typedef ReceiptPdfDownloadAction =
+    Future<void> Function(Map<String, dynamic> receipt);
+typedef ReceiptPdfShareAction =
+    Future<bool> Function(Map<String, dynamic> receipt);
 
 class AdminReportsTab extends StatefulWidget {
   const AdminReportsTab({
     super.key,
     this.downloadServiceOrderPdf,
     this.shareServiceOrderPdf,
+    this.downloadReceiptPdf,
+    this.shareReceiptPdf,
   });
 
   final ServiceOrderPdfDownloadAction? downloadServiceOrderPdf;
   final ServiceOrderPdfShareAction? shareServiceOrderPdf;
+  final ReceiptPdfDownloadAction? downloadReceiptPdf;
+  final ReceiptPdfShareAction? shareReceiptPdf;
 
   @override
   State<AdminReportsTab> createState() => _AdminReportsTabState();
@@ -414,6 +422,10 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                               ),
                             ),
                             child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               leading: Icon(
                                 isFinalizado
                                     ? Icons.check_circle
@@ -421,9 +433,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                                 color: isFinalizado
                                     ? Colors.green
                                     : Colors.orange,
+                                size: 28,
                               ),
                               title: Text(
                                 '${receipt['tipo_documento']} ${receipt['numero_recibo']}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: AppTheme.textColor(context),
                                   fontWeight: FontWeight.bold,
@@ -431,20 +446,16 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                               ),
                               subtitle: Text(
                                 'Total: ${formatCurrency.format(receipt['total'])}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: AppTheme.textMutedColor(context),
                                 ),
                               ),
                               trailing: isFinalizado
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.picture_as_pdf,
-                                        color: Colors.redAccent,
-                                      ),
-                                      onPressed: () =>
-                                          PdfGenerator.generateReceiptPdf(
-                                            receipt,
-                                          ),
+                                  ? _buildReceiptPdfActions(
+                                      context,
+                                      Map<String, dynamic>.from(receipt),
                                     )
                                   : null,
                             ),
@@ -543,6 +554,40 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     );
   }
 
+  Widget _buildReceiptPdfActions(
+    BuildContext context,
+    Map<String, dynamic> receipt,
+  ) {
+    final receiptId = receipt['id_recibo']?.toString() ?? 'unknown';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          key: Key('download_receipt_pdf_$receiptId'),
+          tooltip: 'Descargar recibo PDF',
+          icon: const Icon(Icons.picture_as_pdf_rounded),
+          color: Colors.redAccent,
+          iconSize: 24,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+          padding: EdgeInsets.zero,
+          onPressed: () => _downloadReceiptPdf(context, receipt),
+        ),
+        IconButton(
+          key: Key('share_receipt_pdf_$receiptId'),
+          tooltip: 'Compartir recibo PDF',
+          icon: const Icon(Icons.share_outlined),
+          color: AppTheme.green,
+          iconSize: 22,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+          padding: EdgeInsets.zero,
+          onPressed: () => _shareReceiptPdf(context, receipt),
+        ),
+      ],
+    );
+  }
+
   Future<void> _downloadServiceOrderPdf(
     BuildContext context,
     ServiceOrderModel order,
@@ -574,6 +619,57 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       final shared = action != null
           ? await action(order)
           : await PdfGenerator.shareServiceOrderPdf(order, null);
+
+      if (!shared && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el panel de compartir.'),
+            backgroundColor: AppTheme.amber,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al compartir PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _downloadReceiptPdf(
+    BuildContext context,
+    Map<String, dynamic> receipt,
+  ) async {
+    try {
+      final action = widget.downloadReceiptPdf;
+      if (action != null) {
+        await action(receipt);
+      } else {
+        await PdfGenerator.generateReceiptPdf(receipt);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al generar PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareReceiptPdf(
+    BuildContext context,
+    Map<String, dynamic> receipt,
+  ) async {
+    try {
+      final action = widget.shareReceiptPdf;
+      final shared = action != null
+          ? await action(receipt)
+          : await PdfGenerator.shareReceiptPdf(receipt);
 
       if (!shared && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

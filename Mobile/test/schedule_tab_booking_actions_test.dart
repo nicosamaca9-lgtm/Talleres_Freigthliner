@@ -98,7 +98,8 @@ void main() {
       find.widgetWithText(ElevatedButton, 'Reprogramar'),
     );
 
-    expect(find.text('RECHAZADO'), findsOneWidget);
+    expect(find.text('REVOCADO'), findsOneWidget);
+    expect(find.text('RECHAZADO'), findsNothing);
     expect(reprogramButton.onPressed, isNull);
   });
 

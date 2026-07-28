@@ -258,6 +258,48 @@ class PdfGenerator {
   }
 
   static Future<void> generateReceiptPdf(Map<String, dynamic> receipt) async {
+    final bytes = await buildReceiptPdfBytes(receipt);
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => bytes,
+      name: receiptPdfFileName(receipt),
+    );
+  }
+
+  static Future<bool> shareReceiptPdf(Map<String, dynamic> receipt) async {
+    final identifier = receiptPdfIdentifier(receipt);
+    final filename = receiptPdfFileName(receipt);
+    final bytes = await buildReceiptPdfBytes(receipt);
+
+    return Printing.sharePdf(
+      bytes: bytes,
+      filename: filename,
+      subject: identifier,
+      body: 'Adjunto el documento $identifier.',
+    );
+  }
+
+  static String receiptPdfIdentifier(Map<String, dynamic> receipt) {
+    final type = receipt['tipo_documento']?.toString().trim();
+    final number = receipt['numero_recibo']?.toString().trim();
+    final safeType = type == null || type.isEmpty ? 'DOCUMENTO' : type;
+    final safeNumber = number == null || number.isEmpty ? 'SIN_NUMERO' : number;
+
+    return '$safeType $safeNumber';
+  }
+
+  static String receiptPdfFileName(Map<String, dynamic> receipt) {
+    final safeIdentifier = receiptPdfIdentifier(receipt)
+        .replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+
+    return '$safeIdentifier.pdf';
+  }
+
+  static Future<Uint8List> buildReceiptPdfBytes(
+    Map<String, dynamic> receipt,
+  ) async {
     final pdf = pw.Document();
 
     final items = (receipt['items'] as List<dynamic>?) ?? [];
@@ -409,9 +451,6 @@ class PdfGenerator {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: '${receipt['tipo_documento']}_${receipt['numero_recibo']}.pdf',
-    );
+    return pdf.save();
   }
 }

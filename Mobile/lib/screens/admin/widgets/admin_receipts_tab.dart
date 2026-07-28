@@ -6,8 +6,20 @@ import 'admin_receipt_form_screen.dart';
 import '../../../core/utils/pdf_generator.dart';
 import 'package:intl/intl.dart';
 
+typedef ReceiptPdfDownloadAction =
+    Future<void> Function(Map<String, dynamic> receipt);
+typedef ReceiptPdfShareAction =
+    Future<bool> Function(Map<String, dynamic> receipt);
+
 class AdminReceiptsTab extends StatefulWidget {
-  const AdminReceiptsTab({super.key});
+  const AdminReceiptsTab({
+    super.key,
+    this.downloadReceiptPdf,
+    this.shareReceiptPdf,
+  });
+
+  final ReceiptPdfDownloadAction? downloadReceiptPdf;
+  final ReceiptPdfShareAction? shareReceiptPdf;
 
   @override
   State<AdminReceiptsTab> createState() => _AdminReceiptsTabState();
@@ -34,9 +46,13 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
 
         final filteredReceipts = provider.receipts.where((r) {
           final query = _searchQuery.toLowerCase();
-          return (r['numero_recibo']?.toString().toLowerCase().contains(query) ?? false) ||
-                 (r['placa']?.toString().toLowerCase().contains(query) ?? false) ||
-                 (r['cliente_nombre']?.toString().toLowerCase().contains(query) ?? false);
+          return (r['numero_recibo']?.toString().toLowerCase().contains(
+                    query,
+                  ) ??
+                  false) ||
+              (r['placa']?.toString().toLowerCase().contains(query) ?? false) ||
+              (r['cliente_nombre']?.toString().toLowerCase().contains(query) ??
+                  false);
         }).toList();
 
         return Scaffold(
@@ -53,9 +69,15 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                         child: TextField(
                           style: TextStyle(color: AppTheme.textColor(context)),
                           decoration: InputDecoration(
-                            hintText: 'Buscar por N° Recibo, Placa o Cliente...',
-                            hintStyle: TextStyle(color: AppTheme.textMutedColor(context)),
-                            prefixIcon: Icon(Icons.search, color: AppTheme.textMutedColor(context)),
+                            hintText:
+                                'Buscar por N° Recibo, Placa o Cliente...',
+                            hintStyle: TextStyle(
+                              color: AppTheme.textMutedColor(context),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: AppTheme.textMutedColor(context),
+                            ),
                             filled: true,
                             fillColor: AppTheme.inputColor(context),
                             border: OutlineInputBorder(
@@ -63,16 +85,26 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                               borderSide: BorderSide.none,
                             ),
                           ),
-                          onChanged: (val) => setState(() => _searchQuery = val),
+                          onChanged: (val) =>
+                              setState(() => _searchQuery = val),
                         ),
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add, color: Colors.black),
-                        label: const Text('Nuevo Documento', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'Nuevo Documento',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
                         ),
                         onPressed: () => _showReceiptDialog(context, null),
                       ),
@@ -86,7 +118,10 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                     itemBuilder: (context, index) {
                       final receipt = filteredReceipts[index];
                       final isFinalizado = receipt['estado'] == 'FINALIZADO';
-                      final formatCurrency = NumberFormat.currency(locale: 'es_CO', symbol: '\$');
+                      final formatCurrency = NumberFormat.currency(
+                        locale: 'es_CO',
+                        symbol: '\$',
+                      );
 
                       return Card(
                         color: AppTheme.cardColor(context),
@@ -95,16 +130,28 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                           iconColor: AppTheme.textColor(context),
                           collapsedIconColor: AppTheme.textMutedColor(context),
                           leading: CircleAvatar(
-                            backgroundColor: isFinalizado ? Colors.green : Colors.orange,
-                            child: Icon(isFinalizado ? Icons.check_circle : Icons.edit_document, color: Colors.white),
+                            backgroundColor: isFinalizado
+                                ? Colors.green
+                                : Colors.orange,
+                            child: Icon(
+                              isFinalizado
+                                  ? Icons.check_circle
+                                  : Icons.edit_document,
+                              color: Colors.white,
+                            ),
                           ),
                           title: Text(
                             '${receipt['tipo_documento']} ${receipt['numero_recibo']}',
-                            style: TextStyle(color: AppTheme.textColor(context), fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           subtitle: Text(
                             'Cliente: ${receipt['cliente_nombre']} | Placa: ${receipt['placa']}\nTotal: ${formatCurrency.format(receipt['total'])}',
-                            style: TextStyle(color: AppTheme.textMutedColor(context)),
+                            style: TextStyle(
+                              color: AppTheme.textMutedColor(context),
+                            ),
                           ),
                           children: [
                             Padding(
@@ -118,32 +165,71 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.edit),
                                       label: const Text('Editar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-                                      onPressed: () => _showReceiptDialog(context, receipt),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () =>
+                                          _showReceiptDialog(context, receipt),
                                     ),
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.check),
                                       label: const Text('Finalizar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                                      onPressed: () => _confirmFinalize(context, receipt['id_recibo']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () => _confirmFinalize(
+                                        context,
+                                        receipt['id_recibo'],
+                                      ),
                                     ),
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.delete),
                                       label: const Text('Eliminar'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                                      onPressed: () => _confirmDelete(context, receipt['id_recibo']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () => _confirmDelete(
+                                        context,
+                                        receipt['id_recibo'],
+                                      ),
                                     ),
                                   ],
-                                  if (isFinalizado)
+                                  if (isFinalizado) ...[
                                     ElevatedButton.icon(
+                                      key: Key(
+                                        'download_receipt_pdf_${receipt['id_recibo']}',
+                                      ),
                                       icon: const Icon(Icons.picture_as_pdf),
                                       label: const Text('Descargar PDF'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                                      onPressed: () => PdfGenerator.generateReceiptPdf(receipt),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.redAccent,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () =>
+                                          _downloadReceiptPdf(context, receipt),
                                     ),
+                                    OutlinedButton.icon(
+                                      key: Key(
+                                        'share_receipt_pdf_${receipt['id_recibo']}',
+                                      ),
+                                      icon: const Icon(Icons.share_outlined),
+                                      label: const Text('Compartir PDF'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.green,
+                                        side: const BorderSide(
+                                          color: AppTheme.green,
+                                        ),
+                                      ),
+                                      onPressed: () =>
+                                          _shareReceiptPdf(context, receipt),
+                                    ),
+                                  ],
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
                       );
@@ -156,6 +242,57 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
         );
       },
     );
+  }
+
+  Future<void> _downloadReceiptPdf(
+    BuildContext context,
+    Map<String, dynamic> receipt,
+  ) async {
+    try {
+      final action = widget.downloadReceiptPdf;
+      if (action != null) {
+        await action(receipt);
+      } else {
+        await PdfGenerator.generateReceiptPdf(receipt);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al generar PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareReceiptPdf(
+    BuildContext context,
+    Map<String, dynamic> receipt,
+  ) async {
+    try {
+      final action = widget.shareReceiptPdf;
+      final shared = action != null
+          ? await action(receipt)
+          : await PdfGenerator.shareReceiptPdf(receipt);
+
+      if (!shared && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el panel de compartir.'),
+            backgroundColor: AppTheme.amber,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al compartir PDF: $e'),
+          backgroundColor: AppTheme.red,
+        ),
+      );
+    }
   }
 
   void _showReceiptDialog(BuildContext context, Map<String, dynamic>? receipt) {
@@ -172,7 +309,10 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor(context),
-        title: Text('Finalizar Documento', style: TextStyle(color: AppTheme.textColor(context))),
+        title: Text(
+          'Finalizar Documento',
+          style: TextStyle(color: AppTheme.textColor(context)),
+        ),
         content: Text(
           '¿Estás seguro de finalizar este documento? Una vez finalizado no podrá ser editado ni eliminado, y se podrá descargar en PDF.',
           style: TextStyle(color: AppTheme.textMutedColor(context)),
@@ -180,17 +320,35 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: AppTheme.textMutedColor(context)),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
+              final adminProvider = context.read<AdminProvider>();
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(dialogContext);
               try {
-                await context.read<AdminProvider>().finalizeReceipt(id);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Documento finalizado'), backgroundColor: Colors.green));
+                await adminProvider.finalizeReceipt(id);
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Documento finalizado'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorColor));
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
               }
             },
             child: const Text('Finalizar'),
@@ -205,7 +363,10 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor(context),
-        title: Text('Eliminar Documento', style: TextStyle(color: AppTheme.textColor(context))),
+        title: Text(
+          'Eliminar Documento',
+          style: TextStyle(color: AppTheme.textColor(context)),
+        ),
         content: Text(
           '¿Estás seguro de eliminar este documento?',
           style: TextStyle(color: AppTheme.textMutedColor(context)),
@@ -213,17 +374,35 @@ class _AdminReceiptsTabState extends State<AdminReceiptsTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancelar', style: TextStyle(color: AppTheme.textMutedColor(context))),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: AppTheme.textMutedColor(context)),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
+              final adminProvider = context.read<AdminProvider>();
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(dialogContext);
               try {
-                await context.read<AdminProvider>().deleteReceipt(id);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Documento eliminado'), backgroundColor: Colors.green));
+                await adminProvider.deleteReceipt(id);
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Documento eliminado'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorColor));
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
               }
             },
             child: const Text('Eliminar'),
