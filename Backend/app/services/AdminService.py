@@ -115,7 +115,7 @@ class AdminService:
     @staticmethod
     def _booking_rejected_body(booking: Booking) -> str:
         booking_date = booking.fecha_cita.isoformat()
-        return f"No pudimos agendar su cita para {booking_date} en esta ocasión"
+        return f"No pudimos agendar su cita para {booking_date} en esta ocasión, inténtalo más tarde o comunícate con nosotros."
 
     @staticmethod
     def _booking_status_body(booking: Booking, prefix: str) -> str:

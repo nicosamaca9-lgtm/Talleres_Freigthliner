@@ -147,8 +147,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: Icons.schedule_outlined,
               content: '',
               bulletPoints: const [
-                'Lunes a sábado: horario regular',
-                'Domingos: según programación con el área de mantenimiento',
+                'Lunes a viernes: horario regular',
+                'Sabados: según programación con el área de mantenimiento',
                 'Asistencia en carretera disponible',
               ],
             ),
